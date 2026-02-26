@@ -1,0 +1,62 @@
+{% extends "master.html" %}
+
+{% block title %}Dentistas - Laboratório Dentário{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="fas fa-user-md"></i> Dentistas</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'dentista:criar_dentista' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Novo Dentista
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if dentistas %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-user"></i> Nome</th>
+                    <th><i class="fas fa-id-card"></i> CRM</th>
+                    <th><i class="fas fa-stethoscope"></i> Especialidade</th>
+                    <th><i class="fas fa-envelope"></i> Email</th>
+                    <th><i class="fas fa-phone"></i> Telefone</th>
+                    <th width="150">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dentista in dentistas %}
+                    <tr>
+                        <td><strong>{{ dentista.nome }}</strong></td>
+                        <td>{{ dentista.crm }}</td>
+                        <td>{{ dentista.especialidade|default:"-" }}</td>
+                        <td>{{ dentista.email|default:"-" }}</td>
+                        <td>{{ dentista.telefone|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'dentista:detalhe_dentista' dentista.pk %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'dentista:editar_dentista' dentista.pk %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'dentista:deletar_dentista' dentista.pk %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Nenhum dentista cadastrado.
+        <a href="{% url 'dentista:criar_dentista' %}" class="alert-link">Crie um novo dentista</a>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "master.html" %}
+
+{% block title %}Laboratório{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="fas fa-user-md"></i> Laboratório</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'laboratorio:criar_laboratorio' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Novo Laboratório
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if laboratorios %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-user"></i> Nome</th>
+                    <th><i class="fas fa-id-card"></i> CNPJ</th>
+                    <th><i class="fas fa-envelope"></i> Email</th>
+                    <th><i class="fas fa-phone"></i> Telefone</th>
+                    <th><i class="fas fa-map-marker-alt"></i> Endereço</th>
+                    <th width="150">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for laboratorio in laboratorios %}
+                    <tr>
+                        <td><strong>{{ laboratorio.nome }}</strong></td>
+                        <td>{{ laboratorio.cnpj }}</td>
+                        <td>{{ laboratorio.especialidade|default:"-" }}</td>
+                        <td>{{ laboratorio.email|default:"-" }}</td>
+                        <td>{{ laboratorio.telefone|default:"-" }}</td>
+                        <td>{{ laboratorio.endereco|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'laboratorio:detalhe_laboratorio' laboratorio.pk %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'laboratorio:editar_laboratorio' laboratorio.pk %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'laboratorio:deletar_laboratorio' laboratorio.pk %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Nenhum laboratório cadastrado.
+        <a href="{% url 'laboratorio:criar_laboratorio' %}" class="alert-link">Crie um novo laboratório</a>
+    </div>
+{% endif %}
+{% endblock %}

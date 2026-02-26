@@ -1,0 +1,71 @@
+{% extends "master.html" %}
+
+{% block title %}{% if edit %}Editar{% else %}Novo{% endif %} Laboratório{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if edit %}<i class="fas fa-edit"></i> Editar Laboratório{% else %}<i class="fas fa-plus"></i> Novo Laboratório{% endif %}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-form"></i> Formulário de Laboratório
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome *</label>
+                        <input type="text" class="form-control" id="nome" name="nome" 
+                               value="{% if laboratorio %}{{ laboratorio.nome }}{% endif %}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="cnpj" class="form-label">CNPJ *</label>
+                        <input type="text" class="form-control" id="cnpj" name="cnpj" 
+                               value="{% if laboratorio %}{{ laboratorio.cnpj }}{% endif %}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="especialidade" class="form-label">Especialidade</label>
+                        <input type="text" class="form-control" id="especialidade" name="especialidade" 
+                               value="{% if laboratorio %}{{ laboratorio.especialidade }}{% endif %}" 
+                               placeholder="Ex: Ortodontia, Implantologia">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{% if laboratorio %}{{ laboratorio.email }}{% endif %}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="telefone" class="form-label">Telefone</label>
+                        <input type="tel" class="form-control" id="telefone" name="telefone" 
+                               value="{% if laboratorio %}{{ laboratorio.telefone }}{% endif %}" 
+                               placeholder="(11) 9999-9999">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="endereco" class="form-label">Endereço</label>
+                        <input type="text" class="form-control" id="endereco" name="endereco" 
+                               value="{% if laboratorio %}{{ laboratorio.endereco }}{% endif %}">
+                    </div>                    
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <a href="{% url 'laboratorio:laboratorio' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

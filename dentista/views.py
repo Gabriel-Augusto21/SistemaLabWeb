@@ -1,0 +1,50 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.http import JsonResponse
+from .models import Dentista
+
+def dentista(request):
+    dentistas = Dentista.objects.all()
+    return render(request, 'dentista.html', {'dentistas': dentistas})
+
+def detalhe_dentista(request, pk):
+    dentista = get_object_or_404(Dentista, pk=pk)
+    servicos = dentista.servicos.all()
+    return render(request, 'detalhe_dentista.html', {'dentista': dentista, 'servicos': servicos})
+
+def criar_dentista(request):
+    if request.method == 'POST':
+        try:
+            Dentista.objects.create(
+                nome=request.POST.get('nome'),
+                email=request.POST.get('email'),
+                telefone=request.POST.get('telefone'),
+                especialidade=request.POST.get('especialidade'),
+                crm=request.POST.get('crm')
+            )
+            messages.success(request, 'Dentista criado com sucesso!')
+            return redirect('dentista:dentista')
+        except Exception as e:
+            messages.error(request, f'Erro: {str(e)}')
+    return render(request, 'form_dentista.html')
+
+def editar_dentista(request, pk):
+    dentista = get_object_or_404(Dentista, pk=pk)
+    if request.method == 'POST':
+        dentista.nome = request.POST.get('nome')
+        dentista.email = request.POST.get('email')
+        dentista.telefone = request.POST.get('telefone')
+        dentista.especialidade = request.POST.get('especialidade')
+        dentista.crm = request.POST.get('crm')
+        dentista.save()
+        messages.success(request, 'Dentista atualizado!')
+        return redirect('dentista:detalhe_dentista', pk=dentista.pk)
+    return render(request, 'form_dentista.html', {'dentista': dentista, 'edit': True})
+
+def deletar_dentista(request, pk):
+    dentista = get_object_or_404(Dentista, pk=pk)
+    if request.method == 'POST':
+        dentista.delete()
+        messages.success(request, 'Dentista deletado!')
+        return redirect('dentista:dentista')
+    return render(request, 'deletar_dentista.html', {'dentista': dentista})

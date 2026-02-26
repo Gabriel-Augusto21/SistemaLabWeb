@@ -39,6 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'laboratorio',
+    'dentista',
+    'cliente',
+    'servico',
+    'cronograma',
+    'relatorios',
 ]
 
 MIDDLEWARE = [
@@ -64,7 +70,7 @@ AUTHENTICATION_BACKENDS = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        "DIRS": [os.path.join(BASE_DIR, "resources")], #define o caminho da pasta que tera os recursos usados pelos templates
+        "DIRS": [], 
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -155,15 +161,3 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-#Configurações de variáveis globais
-NUMBER_GRID_PAGES = 3
-NUMBER_GRID_MODAL = 3
-
-# #Dados EMAIL
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  #EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Endereço do servidor SMTP
-EMAIL_PORT = 587               # Porta do servidor SMTP
-EMAIL_USE_TLS = True           # Ative o TLS
-EMAIL_HOST_USER = 'Seuemail@gmail.com'  # Seu endereço de e-mail
-EMAIL_HOST_PASSWORD = 'suasenha123'       # Sua senha ou app password

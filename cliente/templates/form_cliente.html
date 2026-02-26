@@ -1,0 +1,88 @@
+{% extends "master.html" %}
+
+{% block title %}{% if edit %}Editar{% else %}Novo{% endif %} Paciente{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if edit %}<i class="fas fa-edit"></i> Editar Paciente{% else %}<i class="fas fa-plus"></i> Novo Paciente{% endif %}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-form"></i> Formulário de Paciente
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome *</label>
+                        <input type="text" class="form-control" id="nome" name="nome" 
+                               value="{% if cliente %}{{ cliente.nome }}{% endif %}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tipo" class="form-label">Tipo *</label>
+                        <select class="form-select" id="tipo" name="tipo" required>
+                            <option value="">Selecione um tipo</option>
+                            {% for value, label in tipos %}
+                                <option value="{{ value }}" {% if cliente.tipo == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="cpf_cnpj" class="form-label">CPF/CNPJ *</label>
+                        <input type="text" class="form-control" id="cpf_cnpj" name="cpf_cnpj" 
+                               value="{% if cliente %}{{ cliente.cpf_cnpj }}{% endif %}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{% if cliente %}{{ cliente.email }}{% endif %}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="telefone" class="form-label">Telefone</label>
+                        <input type="tel" class="form-control" id="telefone" name="telefone" 
+                               value="{% if cliente %}{{ cliente.telefone }}{% endif %}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="endereco" class="form-label">Endereço</label>
+                        <input type="text" class="form-control" id="endereco" name="endereco" 
+                               value="{% if cliente %}{{ cliente.endereco }}{% endif %}">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cidade" class="form-label">Cidade</label>
+                            <input type="text" class="form-control" id="cidade" name="cidade" 
+                                   value="{% if cliente %}{{ cliente.cidade }}{% endif %}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="estado" class="form-label">Estado</label>
+                            <input type="text" class="form-control" id="estado" name="estado" 
+                                   value="{% if cliente %}{{ cliente.estado }}{% endif %}" maxlength="2">
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <a href="{% url 'cliente:cliente' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

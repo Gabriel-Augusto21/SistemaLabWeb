@@ -1,0 +1,307 @@
+{% extends 'master.html' %}
+{% load static %}
+
+{% block title %}Serviços — {{ data|date:"d/m/Y" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f3f4f6;
+    --container: #ffffff;
+    --surface: #f9fafb;
+    --surface2: #eef2f7;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #2563eb;
+
+    --verde: #22c55e;
+    --vermelho: #ef4444;
+    --laranja: #f97316;
+    --azul: #3b82f6;
+    --roxo: #8b5cf6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ───────── CONTAINER PRINCIPAL ───────── */
+  .page-container {
+    max-width: 1100px;
+    margin: 2.5rem auto;
+    background: var(--container);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,.06);
+    overflow: hidden;
+  }
+
+  /* ───────── HEADER ───────── */
+  .header {
+    padding: 2rem 2.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    background: white;
+  }
+
+  .header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    flex: 1;
+  }
+
+  .header .qtd {
+    font-size: .8rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: .35rem .85rem;
+    color: var(--muted);
+  }
+
+  .volta {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .85rem;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: .5rem 1rem;
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    transition: all .2s ease;
+  }
+
+  .volta:hover {
+    background: var(--accent);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, .25);
+  }
+
+  /* ───────── LISTA ───────── */
+  .lista {
+    padding: 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: all .25s ease;
+    position: relative;
+  }
+
+  .card:hover {
+    background: var(--surface2);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,.08);
+  }
+
+  .card:active {
+    transform: scale(.98);
+  }
+
+  /* barra lateral */
+  .barra {
+    width: 4px;
+    min-height: 48px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .barra.rec   { background: var(--azul); }
+  .barra.prod  { background: var(--roxo); }
+  .barra.fin   { background: var(--laranja); }
+  .barra.ent   { background: var(--verde); }
+  .barra.atras { background: var(--vermelho); }
+
+  .info { flex: 1; min-width: 0; }
+
+  .titulo {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: .35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .meta {
+    font-size: .8rem;
+    color: var(--muted);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  /* badges */
+  .badge {
+    font-size: .7rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: transform .2s ease;
+  }
+
+  .card:hover .badge {
+    transform: scale(1.05);
+  }
+
+  .badge.rec   { background: rgba(59,130,246,.12);  color: var(--azul); }
+  .badge.prod  { background: rgba(139,92,246,.12); color: var(--roxo); }
+  .badge.fin   { background: rgba(249,115,22,.12);  color: var(--laranja); }
+  .badge.ent   { background: rgba(34,197,94,.12);  color: var(--verde); }
+  .badge.atras { background: rgba(239,68,68,.12);  color: var(--vermelho); }
+
+  .vazio {
+    padding: 3rem 2.5rem;
+    color: var(--muted);
+    font-size: .95rem;
+  }
+
+  @media (max-width: 600px) {
+    .header, .lista, .vazio {
+      padding-left: 1.2rem;
+      padding-right: 1.2rem;
+    }
+    .header h1 {
+      font-size: 1.3rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+  <div class="header">
+    <h1>{{ data|date:"d \d\e F \d\e Y" }}</h1>
+
+    {% if servicos %}
+      <span class="qtd">
+        {{ servicos|length }} serviço{{ servicos|length|pluralize }}
+      </span>
+    {% endif %}
+
+    <a class="volta" href="{% url 'cronograma:cronograma' %}?mes={{ data.month }}&ano={{ data.year }}">
+      ← Voltar
+    </a>
+  </div>
+
+  {% if servicos %}
+    <div class="lista">
+      {% for s in servicos %}
+
+        {% if s.atrasado %}
+          {% with cls="atras" label="Atrasado" %}
+          <a class="card" href="{% url 'servico:detalhe_servico' s.pk %}">
+            <div class="barra {{ cls }}"></div>
+            <div class="info">
+              <div class="titulo">
+                {{ s.tipo_protese }}{% if s.material %} — {{ s.material }}{% endif %}
+              </div>
+              <div class="meta">
+                {% if s.dentista %}<span>Dentista: {{ s.dentista.nome }}</span>{% endif %}
+                {% if s.laboratorio %}<span>Laboratório: {{ s.laboratorio.nome }}</span>{% endif %}
+                {% if s.cliente %}<span>Paciente: {{ s.cliente.nome }}</span>{% endif %}
+                {% if s.descricao %}<span>{{ s.descricao|truncatechars:50 }}</span>{% endif %}
+              </div>
+            </div>
+            <span class="badge {{ cls }}">{{ label }}</span>
+          </a>
+          {% endwith %}
+
+        {% elif s.status == 'REC' %}
+          <a class="card" href="{% url 'servico:detalhe_servico' s.pk %}">
+            <div class="barra rec"></div>
+            <div class="info">
+              <div class="titulo">{{ s.tipo_protese }}{% if s.material %} — {{ s.material }}{% endif %}</div>
+              <div class="meta">
+                {% if s.dentista %}<span>Dentista: {{ s.dentista.nome }}</span>{% endif %}
+                {% if s.laboratorio %}<span>Laboratório: {{ s.laboratorio.nome }}</span>{% endif %}
+                {% if s.cliente %}<span>Paciente: {{ s.cliente.nome }}</span>{% endif %}
+                {% if s.descricao %}<span>{{ s.descricao|truncatechars:50 }}</span>{% endif %}
+              </div>
+            </div>
+            <span class="badge rec">Recebido</span>
+          </a>
+
+        {% elif s.status == 'PROD' %}
+          <a class="card" href="{% url 'servico:detalhe_servico' s.pk %}">
+            <div class="barra prod"></div>
+            <div class="info">
+              <div class="titulo">{{ s.tipo_protese }}{% if s.material %} — {{ s.material }}{% endif %}</div>
+              <div class="meta">
+                {% if s.dentista %}<span>Dentista: {{ s.dentista.nome }}</span>{% endif %}
+                {% if s.laboratorio %}<span>Laboratório: {{ s.laboratorio.nome }}</span>{% endif %}
+                {% if s.cliente %}<span>Paciente: {{ s.cliente.nome }}</span>{% endif %}
+                {% if s.descricao %}<span>{{ s.descricao|truncatechars:50 }}</span>{% endif %}
+              </div>
+            </div>
+            <span class="badge prod">Em Produção</span>
+          </a>
+
+        {% elif s.status == 'FIN' %}
+          <a class="card" href="{% url 'servico:detalhe_servico' s.pk %}">
+            <div class="barra fin"></div>
+            <div class="info">
+              <div class="titulo">{{ s.tipo_protese }}{% if s.material %} — {{ s.material }}{% endif %}</div>
+              <div class="meta">
+                {% if s.dentista %}<span>Dentista: {{ s.dentista.nome }}</span>{% endif %}
+                {% if s.laboratorio %}<span>Laboratório: {{ s.laboratorio.nome }}</span>{% endif %}
+                {% if s.cliente %}<span>Paciente: {{ s.cliente.nome }}</span>{% endif %}
+                {% if s.descricao %}<span>{{ s.descricao|truncatechars:50 }}</span>{% endif %}
+              </div>
+            </div>
+            <span class="badge fin">Finalizado</span>
+          </a>
+
+        {% elif s.status == 'ENT' %}
+          <a class="card" href="{% url 'servico:detalhe_servico' s.pk %}">
+            <div class="barra ent"></div>
+            <div class="info">
+              <div class="titulo">{{ s.tipo_protese }}{% if s.material %} — {{ s.material }}{% endif %}</div>
+              <div class="meta">
+                {% if s.dentista %}<span>Dentista: {{ s.dentista.nome }}</span>{% endif %}
+                {% if s.laboratorio %}<span>Laboratório: {{ s.laboratorio.nome }}</span>{% endif %}
+                {% if s.cliente %}<span>Paciente: {{ s.cliente.nome }}</span>{% endif %}
+                {% if s.descricao %}<span>{{ s.descricao|truncatechars:50 }}</span>{% endif %}
+              </div>
+            </div>
+            <span class="badge ent">Entregue</span>
+          </a>
+        {% endif %}
+
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="vazio">Nenhum serviço com entrega prevista para este dia.</p>
+  {% endif %}
+
+</div>
+{% endblock %}

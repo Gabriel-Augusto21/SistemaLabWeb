@@ -1,0 +1,204 @@
+{% extends "master.html" %}
+
+{% block title %}Pacientes - Laboratório HP2{% endblock %}
+
+{% block content %}
+
+<style>
+    .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+        animation: fadeSlide 0.4s ease;
+    }
+
+    .page-header h1 {
+        font-weight: 700;
+        color: #000;
+        margin: 0;
+    }
+
+    .btn-primary {
+        background-color: #333;
+        border: none;
+        border-radius: 8px;
+        transition: 0.2s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #111;
+        transform: translateY(-2px);
+    }
+
+    .table {
+        background-color: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    }
+
+    .table thead th {
+        background-color: #f1f3f5;
+        color: #000;
+        border: none;
+        font-weight: 600;
+        padding: 14px;
+    }
+
+    .table tbody td {
+        padding: 14px;
+        vertical-align: middle;
+    }
+
+    .table tbody tr {
+        transition: 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.005);
+    }
+
+    .badge-custom-pf {
+        background-color: #e9ecef;
+        color: #000;
+        font-weight: 500;
+        padding: 6px 10px;
+        border-radius: 20px;
+    }
+
+    .badge-custom-pj {
+        background-color: #dee2e6;
+        color: #000;
+        font-weight: 500;
+        padding: 6px 10px;
+        border-radius: 20px;
+    }
+
+    .btn-sm {
+        border-radius: 6px;
+        transition: 0.2s ease;
+    }
+
+    .btn-sm:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-info {
+        background-color: #444;
+        border: none;
+        color: #fff;
+    }
+
+    .btn-info:hover {
+        background-color: #222;
+    }
+
+    .btn-warning {
+        background-color: #6c757d;
+        border: none;
+        color: #fff;
+    }
+
+    .btn-warning:hover {
+        background-color: #495057;
+    }
+
+    .btn-danger {
+        background-color: #c62828;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background-color: #8e0000;
+    }
+
+    .empty-state {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        animation: fadeSlide 0.4s ease;
+    }
+
+    .empty-state a {
+        color: #000;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .empty-state a:hover {
+        text-decoration: underline;
+    }
+
+    @keyframes fadeSlide {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="fas fa-users"></i> Pacientes</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'cliente:criar_cliente' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Novo Paciente
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if clientes %}
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>CPF/CNPJ</th>
+                <th>Email</th>
+                <th>Telefone</th>
+                <th width="150">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+            <tr>
+                <td><strong>{{ cliente.nome }}</strong></td>
+                <td>
+                    {% if cliente.tipo == 'PF' %}
+                        <span class="badge-custom-pf">{{ cliente.get_tipo_display }}</span>
+                    {% else %}
+                        <span class="badge-custom-pj">{{ cliente.get_tipo_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ cliente.cpf_cnpj }}</td>
+                <td>{{ cliente.email|default:"-" }}</td>
+                <td>{{ cliente.telefone|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'cliente:detalhe_cliente' cliente.pk %}" class="btn btn-sm btn-info">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'cliente:editar_cliente' cliente.pk %}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'cliente:deletar_cliente' cliente.pk %}" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-info-circle fa-2x mb-3"></i>
+    <p>Nenhum paciente cadastrado.</p>
+    <a href="{% url 'cliente:criar_cliente' %}">Criar um novo Paciente</a>
+</div>
+{% endif %}
+
+{% endblock %}

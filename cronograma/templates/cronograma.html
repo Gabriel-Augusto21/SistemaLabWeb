@@ -1,0 +1,295 @@
+{% extends 'master.html' %}
+{% load static %}
+
+{% block title %}Cronograma — {{ mes_nome }} {{ ano }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+  --bg: #f3f4f6;        /* fundo da página */
+  --calendar-bg: #ffffff; 
+  --surface: #f9fafb; 
+  --surface2: #eef2f7;
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #6b7280;
+  --accent: #2563eb;
+
+  --verde: #22c55e;
+  --vermelho: #ef4444;
+  --laranja: #f97316;
+  --azul: #3b82f6;
+  --roxo: #8b5cf6;
+}
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+ body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+}
+
+  /* ───────── NAVBAR / HEADER ───────── */
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.8rem 2.5rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    background: #ffffff;
+  }
+
+  .cal-header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.9rem;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .cal-nav {
+    display: flex;
+    gap: .6rem;
+    align-items: center;
+  }
+
+  .cal-nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    min-width: 36px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    font-size: .85rem;
+    font-weight: 500;
+    transition: all .2s ease;
+  }
+
+  .cal-nav a:hover {
+    background: var(--accent);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, .25);
+  }
+
+  /* ───────── LEGENDA ───────── */
+  .legenda {
+    display: flex;
+    gap: 1.6rem;
+    padding: .8rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    background: #fff;
+  }
+
+  .leg {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .8rem;
+    color: var(--muted);
+  }
+
+  .leg-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+
+  /* ───────── GRADE ───────── */
+  .cal-wrap { overflow-x: auto; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+    padding: 2rem;
+  }
+
+  .dow {
+    text-align: center;
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: .5rem;
+  }
+
+  /* ───────── CÉLULA ───────── */
+  .cell {
+    background: var(--surface);
+    min-height: 115px;
+    padding: .7rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    transition: all .25s ease;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .cell.vazia {
+    background: transparent;
+    border: none;
+    cursor: default;
+  }
+
+  .cell:not(.vazia):hover {
+    transform: translateY(-4px);
+    background: var(--surface2);
+    box-shadow: 0 10px 20px rgba(0,0,0,.08);
+  }
+
+  .cell.hoje {
+    border: 2px solid var(--accent);
+  }
+
+  .cell a.cell-link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .num {
+    font-size: .85rem;
+    font-weight: 600;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: .5rem;
+    background: white;
+    border: 1px solid var(--border);
+    transition: all .2s ease;
+  }
+
+  .cell.hoje .num {
+    background: var(--accent);
+    color: white;
+    border: none;
+  }
+
+  /* ───────── CHIPS ───────── */
+  .chips {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .chip {
+    font-size: .7rem;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all .2s ease;
+  }
+
+  .chip:hover {
+    transform: scale(1.03);
+  }
+
+  .chip.rec   { background: rgba(59,130,246,.12);  color: var(--azul); }
+  .chip.prod  { background: rgba(139,92,246,.12); color: var(--roxo); }
+  .chip.fin   { background: rgba(249,115,22,.12);  color: var(--laranja); }
+  .chip.ent   { background: rgba(34,197,94,.12);  color: var(--verde); }
+  .chip.atras { background: rgba(239,68,68,.12);  color: var(--vermelho); }
+
+  .mais {
+    font-size: .7rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ───────── CLIQUE (JS EFFECT) ───────── */
+  .cell:active {
+    transform: scale(.97);
+  }
+
+  /* ───────── RESPONSIVO ───────── */
+  @media (max-width: 640px) {
+    .cal-grid { padding: 1rem; gap: 6px; }
+    .cell { min-height: 80px; padding: .5rem; }
+    .chip { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-container"></div>
+<div class="cal-header">
+  <h1>{{ mes_nome }} {{ ano }}</h1>
+  <nav class="cal-nav">
+    <a href="?mes={{ mes_anterior.mes }}&ano={{ mes_anterior.ano }}">&#8592;</a>
+    <a href="?mes={{ hoje.month }}&ano={{ hoje.year }}">Mês</a>
+    <a href="?mes={{ mes_seguinte.mes }}&ano={{ mes_seguinte.ano }}">&#8594;</a>
+  </nav>
+</div>
+
+<div class="legenda">
+  <span class="leg"><span class="leg-dot" style="background:var(--azul)"></span>Recebido</span>
+  <span class="leg"><span class="leg-dot" style="background:var(--roxo)"></span>Em Produção</span>
+  <span class="leg"><span class="leg-dot" style="background:var(--laranja)"></span>Finalizado</span>
+  <span class="leg"><span class="leg-dot" style="background:var(--verde)"></span>Entregue</span>
+  <span class="leg"><span class="leg-dot" style="background:var(--vermelho)"></span>Atrasado</span>
+</div>
+
+<div class="cal-wrap">
+  <div class="cal-grid">
+
+    <div class="dow">Seg</div>
+    <div class="dow">Ter</div>
+    <div class="dow">Qua</div>
+    <div class="dow">Qui</div>
+    <div class="dow">Sex</div>
+    <div class="dow">Sáb</div>
+    <div class="dow">Dom</div>
+
+    {% for semana in semanas %}
+      {% for cel in semana %}
+        {% if cel is None %}
+          <div class="cell vazia"></div>
+        {% else %}
+          <div class="cell {% if cel.is_hoje %}hoje{% elif cel.is_passado %}passado{% endif %}">
+            <a class="cell-link" href="{% url 'cronograma:dia_detalhe' cel.data.year cel.data.month cel.data.day %}">
+              <span class="num">{{ cel.dia }}</span>
+              <div class="chips">
+                {% for s in cel.servicos|slice:":4" %}
+                  {% if s.atrasado %}
+                    <span class="chip atras" title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
+                  {% elif s.status == 'REC' %}
+                    <span class="chip rec"  title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
+                  {% elif s.status == 'PROD' %}
+                    <span class="chip prod" title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
+                  {% elif s.status == 'FIN' %}
+                    <span class="chip fin"  title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
+                  {% elif s.status == 'ENT' %}
+                    <span class="chip ent"  title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
+                  {% endif %}
+                {% endfor %}
+                {% if cel.servicos|length > 4 %}
+                  <span class="mais">+{{ cel.servicos|length|add:"-4" }} mais</span>
+                {% endif %}
+              </div>
+            </a>
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+  </div>
+</div>
+</div>
+{% endblock %}

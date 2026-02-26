@@ -1,0 +1,93 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db.models import Q
+from .models import Servico
+from dentista.models import Dentista
+from cliente.models import Cliente
+from laboratorio.models import Laboratorio
+
+def servico(request):
+    servicos = Servico.objects.all()
+    status = request.GET.get('status')
+    dentista = request.GET.get('dentista')
+    laboratorio = request.GET.get('laboratorio')
+    
+    if status:
+        servicos = servicos.filter(status=status)
+    if dentista:
+        servicos = servicos.filter(dentista_id=dentista)
+    if laboratorio:
+        servicos = servicos.filter(laboratorio_id=laboratorio)
+    
+    return render(request, 'servico.html', {
+        'servicos': servicos,
+        'dentistas': Dentista.objects.all(),
+        'laboratorios': Laboratorio.objects.all(),
+        'statuses': Servico.STATUS_CHOICES
+    })
+
+def detalhe_servico(request, pk):
+    servico = get_object_or_404(Servico, pk=pk)
+    return render(request, 'detalhe_servico.html', {'servico': servico})
+
+def criar_servico(request):
+    if request.method == 'POST':
+        try:
+            Servico.objects.create(
+                dentista_id=request.POST.get('dentista') or None,
+                laboratorio_id=request.POST.get('laboratorio') or None,
+                cliente_id=request.POST.get('cliente') or None,
+                tipo_protese=request.POST.get('tipo_protese'),
+                material=request.POST.get('material'),
+                descricao=request.POST.get('descricao'),
+                data_entrada=request.POST.get('data_entrada'),
+                data_prevista_saida=request.POST.get('data_prevista_saida') or None,
+                valor_servico=request.POST.get('valor_servico') or 0,
+                status=request.POST.get('status', 'REC')
+            )
+            messages.success(request, 'Serviço criado com sucesso!')
+            return redirect('servico:servico')
+        except Exception as e:
+            messages.error(request, f'Erro: {str(e)}')
+    
+    return render(request, 'form_servico.html', {
+        'dentistas': Dentista.objects.all(),
+        'clientes': Cliente.objects.all(),
+        'laboratorios': Laboratorio.objects.all(),
+        'statuses': Servico.STATUS_CHOICES
+    })
+
+def editar_servico(request, pk):
+    servico = get_object_or_404(Servico, pk=pk)
+    if request.method == 'POST':
+        servico.dentista_id = request.POST.get('dentista') or None
+        servico.laboratorio_id = request.POST.get('laboratorio') or None
+        servico.cliente_id = request.POST.get('cliente') or None
+        servico.tipo_protese = request.POST.get('tipo_protese')
+        servico.material = request.POST.get('material')
+        servico.descricao = request.POST.get('descricao')
+        servico.data_entrada = request.POST.get('data_entrada')
+        servico.data_prevista_saida = request.POST.get('data_prevista_saida') or None
+        servico.valor_servico = request.POST.get('valor_servico') or 0
+        servico.valor_pago = request.POST.get('valor_pago') or 0
+        servico.status = request.POST.get('status')
+        servico.save()
+        messages.success(request, 'Serviço atualizado!')
+        return redirect('servico:detalhe_servico', pk=servico.pk)
+    
+    return render(request, 'form_servico.html', {
+        'servico': servico,
+        'edit': True,
+        'dentistas': Dentista.objects.all(),
+        'clientes': Cliente.objects.all(),
+        'laboratorios': Laboratorio.objects.all(),
+        'statuses': Servico.STATUS_CHOICES
+    })
+
+def deletar_servico(request, pk):
+    servico = get_object_or_404(Servico, pk=pk)
+    if request.method == 'POST':
+        servico.delete()
+        messages.success(request, 'Serviço deletado!')
+        return redirect('servico:servico')
+    return render(request, 'deletar_servico.html', {'servico': servico})

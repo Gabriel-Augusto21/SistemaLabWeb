@@ -1,0 +1,250 @@
+{% extends "master.html" %}
+{% block title %}Dashboard — Relatórios{% endblock %}
+
+{% block content %}
+
+<style>
+body {
+    background-color: #ffffff;
+}
+
+h1, h3, h4 {
+    color: #000000;
+}
+
+.card {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    transition: all 0.25s ease;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+}
+
+.card-header {
+    background-color: #111111;
+    color: #ffffff;
+    border-radius: 14px 14px 0 0 !important;
+    font-weight: 600;
+}
+
+.btn {
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+}
+
+.kpi-card h3,
+.kpi-card h4 {
+    font-weight: 700;
+}
+
+.relatorio-card {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+
+.relatorio-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.relatorio-card h5 {
+    font-weight: 700;
+    color: #000000;
+    margin-top: 10px;
+}
+
+.relatorio-card p {
+    font-size: 0.9rem;
+    color: #555555;
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">
+    <i class="fas fa-chart-bar"></i> Dashboard
+  </h1>
+  <a href="?pdf=1" class="btn btn-danger btn-sm">
+    <i class="fas fa-file-pdf"></i> Exportar PDF
+  </a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md">
+    <div class="card shadow-sm text-center kpi-card h-100">
+      <div class="card-body py-3">
+        <p class="text-muted small mb-1">Total</p>
+        <h3>{{ total_servicos }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md">
+    <div class="card shadow-sm text-center kpi-card h-100">
+      <div class="card-body py-3">
+        <p class="text-muted small mb-1">Recebidos</p>
+        <h3>{{ qtd_recebido }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md">
+    <div class="card shadow-sm text-center kpi-card h-100">
+      <div class="card-body py-3">
+        <p class="text-muted small mb-1">Em Produção</p>
+        <h3>{{ qtd_producao }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md">
+    <div class="card shadow-sm text-center kpi-card h-100">
+      <div class="card-body py-3">
+        <p class="text-muted small mb-1">Finalizados</p>
+        <h3>{{ qtd_finalizado }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md">
+    <div class="card shadow-sm text-center kpi-card h-100">
+      <div class="card-body py-3">
+        <p class="text-muted small mb-1">Entregues</p>
+        <h3>{{ qtd_entregue }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md">
+    <div class="card shadow-sm text-center kpi-card h-100">
+      <div class="card-body py-3">
+        <p class="text-muted small mb-1">Atrasados</p>
+        <h3 class="text-danger">{{ servicos_atrasados }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm text-center kpi-card">
+      <div class="card-body">
+        <p class="text-muted small mb-1">Faturamento Total</p>
+        <h4>R$ {{ valor_total|floatformat:2 }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm text-center kpi-card">
+      <div class="card-body">
+        <p class="text-muted small mb-1">Valor Recebido</p>
+        <h4 class="text-success">R$ {{ valor_pago|floatformat:2 }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm text-center kpi-card">
+      <div class="card-body">
+        <p class="text-muted small mb-1">Saldo a Receber</p>
+        <h4 class="text-danger">R$ {{ saldo|floatformat:2 }}</h4>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header">
+    <i class="fas fa-file-alt"></i> Relatórios Disponíveis
+  </div>
+  <div class="card-body">
+    <div class="row g-4">
+
+      <div class="col-md-4">
+        <a href="{% url 'relatorios:financeiro' %}" class="text-decoration-none">
+          <div class="relatorio-card">
+            <i class="fas fa-file-invoice-dollar fa-2x"></i>
+            <h5>Financeiro</h5>
+            <p>Faturamento, pagamentos e saldos detalhados.</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{% url 'relatorios:periodo' %}" class="text-decoration-none">
+          <div class="relatorio-card">
+            <i class="fas fa-calendar-alt fa-2x"></i>
+            <h5>Por Período</h5>
+            <p>Filtre todos os serviços por intervalo de datas.</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{% url 'relatorios:dentistas' %}" class="text-decoration-none">
+          <div class="relatorio-card">
+            <i class="fas fa-user-md fa-2x"></i>
+            <h5>Por Dentista</h5>
+            <p>Receita e quantidade de serviços por dentista.</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{% url 'relatorios:clientes' %}" class="text-decoration-none">
+          <div class="relatorio-card">
+            <i class="fas fa-user fa-2x"></i>
+            <h5>Por Cliente</h5>
+            <p>Serviços e valores agrupados por cliente.</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{% url 'relatorios:laboratorios' %}" class="text-decoration-none">
+          <div class="relatorio-card">
+            <i class="fas fa-flask fa-2x"></i>
+            <h5>Por Laboratório</h5>
+            <p>Volume e receita por laboratório parceiro.</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{% url 'relatorios:status' %}" class="text-decoration-none">
+          <div class="relatorio-card">
+            <i class="fas fa-tags fa-2x"></i>
+            <h5>Por Status</h5>
+            <p>Distribuição dos serviços por situação atual.</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{% url 'relatorios:atrasados' %}" class="text-decoration-none">
+          <div class="relatorio-card">
+            <i class="fas fa-exclamation-triangle fa-2x"></i>
+            <h5>Atrasados</h5>
+            <p>Todos os serviços fora do prazo previsto.</p>
+          </div>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

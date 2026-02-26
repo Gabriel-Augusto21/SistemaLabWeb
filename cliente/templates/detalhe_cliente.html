@@ -1,0 +1,56 @@
+{% extends "master.html" %}
+
+{% block title %}{{ cliente.nome }} - Paciente{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="fas fa-users"></i> {{ cliente.nome }}</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'cliente:editar_cliente' cliente.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'cliente:deletar_cliente' cliente.pk %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Deletar
+            </a>
+            <a href="{% url 'cliente:cliente' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-info-circle"></i> Informações
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Tipo:</strong> 
+                    <span class="badge {% if cliente.tipo == 'PF' %}bg-info{% else %}bg-warning{% endif %}">
+                        {{ cliente.get_tipo_display }}
+                    </span>
+                </p>
+                <p><strong>CPF/CNPJ:</strong> {{ cliente.cpf_cnpj }}</p>
+                <p><strong>Email:</strong> {{ cliente.email|default:"-" }}</p>
+                <p><strong>Telefone:</strong> {{ cliente.telefone|default:"-" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Endereço:</strong> {{ cliente.endereco|default:"-" }}</p>
+                <p><strong>Cidade:</strong> {{ cliente.cidade|default:"-" }}</p>
+                <p><strong>Estado:</strong> {{ cliente.estado|default:"-" }}</p>
+                <p><strong>Status:</strong> 
+                    {% if cliente.ativo %}
+                        <span class="badge bg-success">Ativo</span>
+                    {% else %}
+                        <span class="badge bg-danger">Inativo</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

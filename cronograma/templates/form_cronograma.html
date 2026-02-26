@@ -1,0 +1,97 @@
+{% extends "master.html" %}
+
+{% block title %}{% if edit %}Editar{% else %}Novo{% endif %} Cronograma{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if edit %}<i class="fas fa-edit"></i> Editar Cronograma{% else %}<i class="fas fa-plus"></i> Novo Cronograma{% endif %}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-form"></i> Formulário de Cronograma
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título *</label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" 
+                               value="{% if cronograma %}{{ cronograma.titulo }}{% endif %}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3">{% if cronograma %}{{ cronograma.descricao }}{% endif %}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="dentista" class="form-label">Dentista *</label>
+                        <select class="form-select" id="dentista" name="dentista" required>
+                            <option value="">Selecione um dentista</option>
+                            {% for d in dentistas %}
+                                <option value="{{ d.id }}" {% if cronograma.dentista_id == d.id %}selected{% endif %}>
+                                    {{ d.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="cliente" class="form-label">Cliente</label>
+                        <select class="form-select" id="cliente" name="cliente">
+                            <option value="">Nenhum</option>
+                            {% for c in clientes %}
+                                <option value="{{ c.id }}" {% if cronograma.cliente_id == c.id %}selected{% endif %}>
+                                    {{ c.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="data_inicio" class="form-label">Data de Início *</label>
+                            <input type="datetime-local" class="form-control" id="data_inicio" name="data_inicio" 
+                                   value="{% if cronograma %}{{ cronograma.data_inicio|date:'Y-m-d\TH:i' }}{% endif %}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="data_fim" class="form-label">Data de Fim *</label>
+                            <input type="datetime-local" class="form-control" id="data_fim" name="data_fim" 
+                                   value="{% if cronograma %}{{ cronograma.data_fim|date:'Y-m-d\TH:i' }}{% endif %}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="prioridade" class="form-label">Prioridade</label>
+                        <select class="form-select" id="prioridade" name="prioridade">
+                            {% for code, label in prioridades %}
+                                <option value="{{ code }}" {% if cronograma.prioridade == code %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="observacoes" class="form-label">Observações</label>
+                        <textarea class="form-control" id="observacoes" name="observacoes" rows="3">{% if cronograma %}{{ cronograma.observacoes }}{% endif %}</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <a href="{% url 'cronograma:cronograma' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

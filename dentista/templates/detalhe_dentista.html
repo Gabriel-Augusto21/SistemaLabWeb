@@ -1,0 +1,75 @@
+{% extends "master.html" %}
+
+{% block title %}{{ dentista.nome }} - Dentista{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="fas fa-user-md"></i> {{ dentista.nome }}</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'dentista:editar_dentista' dentista.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'dentista:deletar_dentista' dentista.pk %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Deletar
+            </a>
+            <a href="{% url 'dentista:dentista' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> Informações
+            </div>
+            <div class="card-body">
+                <p><strong>CRM:</strong> {{ dentista.crm }}</p>
+                <p><strong>Especialidade:</strong> {{ dentista.especialidade|default:"-" }}</p>
+                <p><strong>Email:</strong> {{ dentista.email|default:"-" }}</p>
+                <p><strong>Telefone:</strong> {{ dentista.telefone|default:"-" }}</p>
+                <p><strong>Status:</strong> 
+                    {% if dentista.ativo %}
+                        <span class="badge bg-success">Ativo</span>
+                    {% else %}
+                        <span class="badge bg-danger">Inativo</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-wrench"></i> Serviços
+            </div>
+            <div class="card-body">
+                {% if servicos %}
+                    <ul class="list-group list-group-flush">
+                        {% for servico in servicos %}
+                            <li class="list-group-item">
+                                <strong>{{ servico.tipo_protese }}</strong><br>
+                                <small>{{ servico.data_entrada|date:"d/m/Y" }} - 
+                                    {% if servico.data_prevista_saida %}
+                                        {{ servico.data_prevista_saida|date:"d/m/Y" }}
+                                    {% else %}
+                                        Sem data prevista
+                                    {% endif %}
+                                </small>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Nenhum serviço registrado</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
