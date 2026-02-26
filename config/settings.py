@@ -82,6 +82,7 @@ DATABASES = {
             'postgres://postgres:root@localhost:5432/db_lab'  # fallback local
         ),
         conn_max_age=600,
+        ssl_require=os.environ.get('DATABASE_URL') is not None,  # SSL apenas em produção (Neon exige)
     )
 }
 
