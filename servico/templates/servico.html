@@ -32,28 +32,6 @@
                 </select>
             </div>
             <div class="col-md-6">
-                <label for="laboratorio" class="form-label">Filtrar por Laboratório</label>
-                <select name="laboratorio" id="laboratorio" class="form-select">
-                    <option value="">Todos</option>
-                    {% for l in laboratorios %}
-                        <option value="{{ l.id }}" {% if request.GET.laboratorio|stringformat:"s" == l.id|stringformat:"s" %}selected{% endif %}>
-                            {{ l.nome }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-6">
-                <label for="c" class="form-label">Filtrar por Cliente</label>
-                <select name="cliente" id="cliente" class="form-select">
-                    <option value="">Todos</option>
-                    {% for c in clientes %}
-                        <option value="{{ c.id }}" {% if request.GET.cliente|stringformat:"s" == c.id|stringformat:"s" %}selected{% endif %}>
-                            {{ c.nome }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-6">
                 <label for="status" class="form-label">Filtrar por Status</label>
                 <select name="status" id="status" class="form-select">
                     <option value="">Todos</option>
@@ -80,8 +58,7 @@
                 <tr>
                     <th><i class="fas fa-tooth"></i> Prótese</th>
                     <th><i class="fas fa-user-md"></i> Dentista</th>
-                    <th><i class="fas fa-user-tie"></i> Laboratório</th>
-                    <th><i class="fas fa-user"></i> Cliente</th>
+                    <th><i class="fas fa-user"></i> Paciente</th>
                     <th><i class="fas fa-calendar"></i> Entrada</th>
                     <th><i class="fas fa-calendar-check"></i> Saída Prevista</th>
                     <th><i class="fas fa-tag"></i> Status</th>
@@ -94,8 +71,7 @@
                     <tr {% if servico.atrasado %}style="background-color: #ffe6e6;"{% endif %}>
                         <td><strong>{{ servico.tipo_protese }}</strong></td>
                         <td>{{ servico.dentista.nome|default:"-" }}</td>
-                        <td>{{ servico.laboratorio.nome|default:"-" }}</td>
-                        <td>{{ servico.cliente.nome|default:"-" }}</td>
+                        <td>{{ servico.paciente|default:"-" }}</td>
                         <td>{{ servico.data_entrada|date:"d/m/Y" }}</td>
                         <td>{{ servico.data_prevista_saida|date:"d/m/Y"|default:"-" }}</td>
                         <td>

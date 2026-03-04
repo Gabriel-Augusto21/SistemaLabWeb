@@ -1,13 +1,10 @@
-
 from datetime import date, timedelta
 from io import BytesIO
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from dentista.models import Dentista
-from laboratorio.models import Laboratorio
-from cliente.models import Cliente
 from servico.models import Servico
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
@@ -25,6 +22,7 @@ _AZUL_CLA  = colors.HexColor("#d6eaf8")
 _VERMELHO  = colors.HexColor("#c0392b")
 _CINZA_CLA = colors.HexColor("#f2f3f4")
 _CINZA_MED = colors.HexColor("#bdc3c7")
+
 
 def _estilos():
     base = getSampleStyleSheet()
@@ -48,7 +46,7 @@ def _estilos():
 
 def _cabecalho(story, titulo, subtitulo=None, periodo=None):
     e = _estilos()
-    story.append(Paragraph("LaborDent", e["sub"]))
+    story.append(Paragraph("Laboratório HP2", e["sub"]))
     story.append(Paragraph(titulo, e["titulo"]))
     if subtitulo:
         story.append(Paragraph(subtitulo, e["sub"]))
@@ -63,24 +61,23 @@ def _cabecalho(story, titulo, subtitulo=None, periodo=None):
 
 
 def _ts(header_color=None):
-    """TableStyle padrão com zebra."""
     hc = header_color or _AZUL_ESC
     return TableStyle([
-        ("BACKGROUND",    (0,  0), (-1,  0), hc),
-        ("TEXTCOLOR",     (0,  0), (-1,  0), colors.white),
-        ("FONTNAME",      (0,  0), (-1,  0), "Helvetica-Bold"),
-        ("FONTSIZE",      (0,  0), (-1,  0), 9),
-        ("ALIGN",         (0,  0), (-1,  0), "CENTER"),
-        ("TOPPADDING",    (0,  0), (-1,  0), 6),
-        ("BOTTOMPADDING", (0,  0), (-1,  0), 6),
-        ("FONTNAME",      (0,  1), (-1, -1), "Helvetica"),
-        ("FONTSIZE",      (0,  1), (-1, -1), 8),
-        ("ROWBACKGROUNDS",(0,  1), (-1, -1), [colors.white, _CINZA_CLA]),
-        ("VALIGN",        (0,  0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING",    (0,  1), (-1, -1), 4),
-        ("BOTTOMPADDING", (0,  1), (-1, -1), 4),
-        ("GRID",          (0,  0), (-1, -1), 0.4, _CINZA_MED),
-        ("LINEBELOW",     (0,  0), (-1,  0), 1.5, _AZUL_MED),
+        ("BACKGROUND",     (0,  0), (-1,  0), hc),
+        ("TEXTCOLOR",      (0,  0), (-1,  0), colors.white),
+        ("FONTNAME",       (0,  0), (-1,  0), "Helvetica-Bold"),
+        ("FONTSIZE",       (0,  0), (-1,  0), 9),
+        ("ALIGN",          (0,  0), (-1,  0), "CENTER"),
+        ("TOPPADDING",     (0,  0), (-1,  0), 6),
+        ("BOTTOMPADDING",  (0,  0), (-1,  0), 6),
+        ("FONTNAME",       (0,  1), (-1, -1), "Helvetica"),
+        ("FONTSIZE",       (0,  1), (-1, -1), 8),
+        ("ROWBACKGROUNDS", (0,  1), (-1, -1), [colors.white, _CINZA_CLA]),
+        ("VALIGN",         (0,  0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING",     (0,  1), (-1, -1), 4),
+        ("BOTTOMPADDING",  (0,  1), (-1, -1), 4),
+        ("GRID",           (0,  0), (-1, -1), 0.4, _CINZA_MED),
+        ("LINEBELOW",      (0,  0), (-1,  0), 1.5, _AZUL_MED),
     ])
 
 
@@ -88,20 +85,19 @@ def _bloco_totais(story, dados: dict):
     linhas = [["Resumo", "Valor"]] + [[k, v] for k, v in dados.items()]
     t = Table(linhas, colWidths=[10*cm, 5*cm])
     t.setStyle(TableStyle([
-        ("BACKGROUND",    (0, 0), (-1,  0), _AZUL_MED),
-        ("TEXTCOLOR",     (0, 0), (-1,  0), colors.white),
-        ("FONTNAME",      (0, 0), (-1, -1), "Helvetica-Bold"),
-        ("FONTSIZE",      (0, 0), (-1, -1), 9),
-        ("GRID",          (0, 0), (-1, -1), 0.4, _CINZA_MED),
-        ("ROWBACKGROUNDS",(0, 1), (-1, -1), [_AZUL_CLA, colors.white]),
-        ("ALIGN",         (1, 0), (1,  -1), "RIGHT"),
+        ("BACKGROUND",     (0, 0), (-1,  0), _AZUL_MED),
+        ("TEXTCOLOR",      (0, 0), (-1,  0), colors.white),
+        ("FONTNAME",       (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTSIZE",       (0, 0), (-1, -1), 9),
+        ("GRID",           (0, 0), (-1, -1), 0.4, _CINZA_MED),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [_AZUL_CLA, colors.white]),
+        ("ALIGN",          (1, 0), (1,  -1), "RIGHT"),
     ]))
     story.append(Spacer(1, 0.4*cm))
     story.append(t)
 
 
 def _r(v) -> str:
-    """Formata decimal como R$ X.XX"""
     return f"R$ {float(v or 0):.2f}"
 
 
@@ -126,23 +122,24 @@ def _pdf_response(conteudo: bytes, nome: str) -> HttpResponse:
     resp["Content-Disposition"] = f'inline; filename="{nome}"'
     return resp
 
+
+# ─── geradores de PDF ────────────────────────────────────────
+
 def _pdf_dashboard(ctx) -> bytes:
     buf = BytesIO()
     doc = _doc_retrato(buf)
     story = []
     _cabecalho(story, "Dashboard Geral")
     dados = [
-        ["Indicador",          "Valor"],
-        ["Total de Serviços",  str(ctx["total_servicos"])],
-        ["Recebidos",          str(ctx["por_status"].get("REC", 0))],
-        ["Em Produção",        str(ctx["por_status"].get("PROD", 0))],
-        ["Finalizados",        str(ctx["por_status"].get("FIN", 0))],
-        ["Entregues",          str(ctx["por_status"].get("ENT", 0))],
-        ["Cancelados",         str(ctx["por_status"].get("CAN", 0))],
-        ["Atrasados",          str(ctx["servicos_atrasados"])],
-        ["Faturamento Total",  _r(ctx["valor_total"])],
-        ["Valor Recebido",     _r(ctx["valor_pago"])],
-        ["Saldo a Receber",    _r(ctx["saldo"])],
+        ["Indicador",         "Valor"],
+        ["Total de Serviços", str(ctx["total_servicos"])],
+        ["Recebidos",         str(ctx["por_status"].get("REC",  0))],
+        ["Em Produção",       str(ctx["por_status"].get("PROD", 0))],
+        ["Finalizados",       str(ctx["por_status"].get("FIN",  0))],
+        ["Entregues",         str(ctx["por_status"].get("ENT",  0))],
+        ["Cancelados",        str(ctx["por_status"].get("CAN",  0))],
+        ["Atrasados",         str(ctx["servicos_atrasados"])],
+        ["Faturamento Total", _r(ctx["valor_total"])],
     ]
     t = Table(dados, colWidths=[9*cm, 6*cm])
     t.setStyle(_ts())
@@ -151,31 +148,26 @@ def _pdf_dashboard(ctx) -> bytes:
     return buf.getvalue()
 
 
-def _pdf_financeiro(servicos, vt, vp, saldo, periodo=None) -> bytes:
+def _pdf_financeiro(servicos, vt, periodo=None) -> bytes:
     buf = BytesIO()
     doc = _doc_paisagem(buf)
     story = []
     _cabecalho(story, "Relatório Financeiro", periodo=periodo)
-    linhas = [["Prótese", "Dentista", "Cliente", "Entrada",
-               "Vl. Serviço", "Vl. Pago", "Saldo", "Status"]]
+    linhas = [["Prótese", "Dentista", "Paciente", "Entrada", "Vl. Serviço", "Status"]]
     for s in servicos:
         linhas.append([
             s.tipo_protese,
-            s.dentista.nome,
-            s.cliente.nome if s.cliente else "-",
+            s.dentista.nome if s.dentista else "-",
+            s.paciente or "-",
             _fmt_data(s.data_entrada),
             _r(s.valor_servico),
-            _r(s.valor_pago),
-            _r(s.saldo),           
             s.get_status_display(),
         ])
-    cw = [3.5*cm, 3*cm, 3*cm, 2.5*cm, 2.8*cm, 2.8*cm, 2.8*cm, 2.5*cm]
+    cw = [4*cm, 3.5*cm, 3.5*cm, 3*cm, 3.5*cm, 3.5*cm]
     t = Table(linhas, colWidths=cw, repeatRows=1)
     t.setStyle(_ts())
     story.append(t)
-    _bloco_totais(story, {"Faturamento Total": _r(vt),
-                          "Valor Recebido":    _r(vp),
-                          "Saldo a Receber":   _r(saldo)})
+    _bloco_totais(story, {"Faturamento Total": _r(vt)})
     doc.build(story)
     return buf.getvalue()
 
@@ -185,104 +177,45 @@ def _pdf_dentistas(dentistas, periodo=None) -> bytes:
     doc = _doc_retrato(buf)
     story = []
     _cabecalho(story, "Receita por Dentista", periodo=periodo)
-    linhas = [["Dentista", "Qtd.", "Faturamento", "Recebido", "Saldo"]]
-    fat_total = rec_total = 0
+    linhas = [["Dentista", "Qtd.", "Faturamento"]]
+    fat_total = 0
     for d in dentistas:
         fat = float(d.valor_total or 0)
-        rec = float(d.valor_pago or 0)
         fat_total += fat
-        rec_total += rec
-        linhas.append([d.nome, str(d.total_servicos),
-                       _r(fat), _r(rec), _r(fat - rec)])
-    cw = [6*cm, 2.5*cm, 3.5*cm, 3.5*cm, 3.5*cm]
+        linhas.append([d.nome, str(d.total_servicos), _r(fat)])
+    cw = [9*cm, 3*cm, 5*cm]
     t = Table(linhas, colWidths=cw, repeatRows=1)
     t.setStyle(_ts())
     story.append(t)
-    _bloco_totais(story, {"Faturamento Total": _r(fat_total),
-                          "Total Recebido":    _r(rec_total),
-                          "Saldo Total":       _r(fat_total - rec_total)})
+    _bloco_totais(story, {"Faturamento Total": _r(fat_total)})
     doc.build(story)
     return buf.getvalue()
 
 
 def _pdf_atrasados(servicos) -> bytes:
-    servicos = list(servicos)
     buf = BytesIO()
     doc = _doc_paisagem(buf)
     story = []
     _cabecalho(story, "Serviços Atrasados",
                subtitulo=f"{len(servicos)} serviço(s) em atraso")
-    linhas = [["Prótese", "Dentista", "Cliente",
-               "Saída Prevista", "Dias Atraso", "Status", "Valor"]]
-    hoje = date.today()
+    linhas = [["Prótese", "Dentista", "Paciente", "Saída Prevista", "Dias Atraso", "Status", "Valor"]]
     for s in servicos:
-        dias = (hoje - s.data_prevista_saida).days if s.data_prevista_saida else 0
         linhas.append([
             s.tipo_protese,
-            s.dentista.nome,
-            s.cliente.nome if s.cliente else "-",
+            s.dentista.nome if s.dentista else "-",
+            s.paciente or "-",
             _fmt_data(s.data_prevista_saida),
-            f"{dias} dia(s)",
+            f"{s.dias_atraso} dia(s)",
             s.get_status_display(),
             _r(s.valor_servico),
         ])
-    cw = [3.5*cm, 3.5*cm, 3.5*cm, 3*cm, 2.5*cm, 3*cm, 3*cm]
+    cw = [3.5*cm, 3.5*cm, 3*cm, 3*cm, 2.5*cm, 3*cm, 3*cm]
     t = Table(linhas, colWidths=cw, repeatRows=1)
     style = _ts(header_color=_VERMELHO)
     for i in range(1, len(linhas)):
         style.add("BACKGROUND", (0, i), (-1, i), colors.HexColor("#fde8e8"))
     t.setStyle(style)
     story.append(t)
-    doc.build(story)
-    return buf.getvalue()
-
-
-def _pdf_clientes(clientes_qs, periodo=None) -> bytes:
-    buf = BytesIO()
-    doc = _doc_retrato(buf)
-    story = []
-    _cabecalho(story, "Serviços por Cliente", periodo=periodo)
-    linhas = [["Cliente", "Qtd.", "Faturamento", "Recebido", "Saldo"]]
-    fat_total = rec_total = 0
-    for c in clientes_qs:
-        fat = float(c.valor_total or 0)
-        rec = float(c.valor_pago or 0)
-        fat_total += fat
-        rec_total += rec
-        linhas.append([c.nome, str(c.total_servicos),
-                       _r(fat), _r(rec), _r(fat - rec)])
-    cw = [7*cm, 2.5*cm, 3.5*cm, 3.5*cm, 3.5*cm]
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(_ts())
-    story.append(t)
-    _bloco_totais(story, {"Faturamento Total": _r(fat_total),
-                          "Total Recebido":    _r(rec_total),
-                          "Saldo Total":       _r(fat_total - rec_total)})
-    doc.build(story)
-    return buf.getvalue()
-
-
-def _pdf_laboratorios(labs_qs, periodo=None) -> bytes:
-    buf = BytesIO()
-    doc = _doc_retrato(buf)
-    story = []
-    _cabecalho(story, "Serviços por Laboratório", periodo=periodo)
-    linhas = [["Laboratório", "Qtd.", "Faturamento", "Recebido", "Saldo"]]
-    fat_total = rec_total = 0
-    for lab in labs_qs:
-        fat = float(lab.valor_total or 0)
-        rec = float(lab.valor_pago or 0)
-        fat_total += fat
-        rec_total += rec
-        linhas.append([lab.nome, str(lab.total_servicos),
-                       _r(fat), _r(rec), _r(fat - rec)])
-    cw = [6*cm, 2.5*cm, 3.5*cm, 3.5*cm, 3.5*cm]
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(_ts())
-    story.append(t)
-    _bloco_totais(story, {"Faturamento Total": _r(fat_total),
-                          "Total Recebido":    _r(rec_total),
-                          "Saldo Total":       _r(fat_total - rec_total)})
     doc.build(story)
     return buf.getvalue()
 
@@ -318,32 +251,53 @@ def _pdf_periodo(servicos, di, df) -> bytes:
     story = []
     periodo = f"{di.strftime('%d/%m/%Y')} a {df.strftime('%d/%m/%Y')}"
     _cabecalho(story, "Relatório por Período", periodo=periodo)
-    linhas = [["Prótese", "Dentista", "Cliente", "Entrada",
-               "Saída Prev.", "Status", "Vl. Serviço", "Vl. Pago"]]
-    fat_total = pago_total = 0
+    linhas = [["Prótese", "Dentista", "Paciente", "Entrada", "Saída Prev.", "Status", "Vl. Serviço"]]
+    fat_total = 0
     for s in servicos:
-        fat_total  += float(s.valor_servico or 0)
-        pago_total += float(s.valor_pago or 0)
+        fat_total += float(s.valor_servico or 0)
         linhas.append([
             s.tipo_protese,
-            s.dentista.nome,
-            s.cliente.nome if s.cliente else "-",
+            s.dentista.nome if s.dentista else "-",
+            s.paciente or "-",
             _fmt_data(s.data_entrada),
             _fmt_data(s.data_prevista_saida),
             s.get_status_display(),
             _r(s.valor_servico),
-            _r(s.valor_pago),
         ])
-    cw = [3.5*cm, 3*cm, 3*cm, 2.5*cm, 2.5*cm, 2.5*cm, 3*cm, 3*cm]
+    cw = [4*cm, 3.5*cm, 3.5*cm, 2.8*cm, 2.8*cm, 3*cm, 3.4*cm]
     t = Table(linhas, colWidths=cw, repeatRows=1)
     t.setStyle(_ts())
     story.append(t)
-    _bloco_totais(story, {"Faturamento no Período": _r(fat_total),
-                          "Recebido no Período":    _r(pago_total),
-                          "Saldo do Período":       _r(fat_total - pago_total)})
+    _bloco_totais(story, {"Faturamento no Período": _r(fat_total)})
     doc.build(story)
     return buf.getvalue()
 
+
+def _pdf_detalhe_dentista(dentista, servicos, vt, periodo=None) -> bytes:
+    buf = BytesIO()
+    doc = _doc_paisagem(buf)
+    story = []
+    _cabecalho(story, f"Serviços — {dentista.nome}", periodo=periodo)
+    linhas = [["Prótese", "Paciente", "Entrada", "Saída Prev.", "Status", "Valor"]]
+    for s in servicos:
+        linhas.append([
+            s.tipo_protese,
+            s.paciente or "-",
+            _fmt_data(s.data_entrada),
+            _fmt_data(s.data_prevista_saida),
+            s.get_status_display(),
+            _r(s.valor_servico),
+        ])
+    cw = [5*cm, 5*cm, 3*cm, 3*cm, 3.5*cm, 3.5*cm]
+    t = Table(linhas, colWidths=cw, repeatRows=1)
+    t.setStyle(_ts())
+    story.append(t)
+    _bloco_totais(story, {"Faturamento Total": _r(vt)})
+    doc.build(story)
+    return buf.getvalue()
+
+
+# ─── helpers ────────────────────────────────────────────────
 
 def _filtros_periodo(request):
     hoje = date.today()
@@ -358,42 +312,40 @@ def _filtros_periodo(request):
     return di, df
 
 
-def _agg(qs):
-    agg = qs.aggregate(total=Sum("valor_servico"), pago=Sum("valor_pago"))
-    vt = agg["total"] or 0
-    vp = agg["pago"]  or 0
-    return vt, vp, vt - vp
+def _agg_fat(qs):
+    return qs.aggregate(total=Sum("valor_servico"))["total"] or 0
 
 
 def _periodo_str(di, df) -> str:
     return f"{di.strftime('%d/%m/%Y')} a {df.strftime('%d/%m/%Y')}"
 
 
+# ─── views ──────────────────────────────────────────────────
+
 def dashboard(request):
     hoje = timezone.now().date()
-    qs_todos = Servico.objects.all()
+    qs = Servico.objects.all()
 
-    # contagens por status
-    por_status_qs = qs_todos.values("status").annotate(qtd=Count("id"))
+    por_status_qs = qs.values("status").annotate(qtd=Count("id"))
     por_status = {item["status"]: item["qtd"] for item in por_status_qs}
 
-    atrasados = qs_todos.filter(
+    atrasados = qs.filter(
         ~Q(status__in=["ENT", "CAN"]),
         data_prevista_saida__lt=hoje,
     ).count()
 
-    vt, vp, saldo = _agg(qs_todos)
+    valor_total = _agg_fat(qs)
 
     ctx = {
-        "total_servicos":     qs_todos.count(),
+        "total_servicos":     qs.count(),
         "por_status":         por_status,
         "servicos_atrasados": atrasados,
-        "valor_total": vt, "valor_pago": vp, "saldo": saldo,
-        "qtd_recebido":   por_status.get("REC",  0),
-        "qtd_producao":   por_status.get("PROD", 0),
-        "qtd_finalizado": por_status.get("FIN",  0),
-        "qtd_entregue":   por_status.get("ENT",  0),
-        "qtd_cancelado":  por_status.get("CAN",  0),
+        "valor_total":        valor_total,
+        "qtd_recebido":       por_status.get("REC",  0),
+        "qtd_producao":       por_status.get("PROD", 0),
+        "qtd_finalizado":     por_status.get("FIN",  0),
+        "qtd_entregue":       por_status.get("ENT",  0),
+        "qtd_cancelado":      por_status.get("CAN",  0),
     }
     if request.GET.get("pdf"):
         return _pdf_response(_pdf_dashboard(ctx), "dashboard.pdf")
@@ -404,30 +356,26 @@ def financeiro(request):
     di, df = _filtros_periodo(request)
     qs = (Servico.objects
           .filter(data_entrada__gte=di, data_entrada__lte=df)
-          .select_related("dentista", "cliente")
+          .select_related("dentista")
           .order_by("data_entrada"))
-    vt, vp, saldo = _agg(qs)
+    vt = _agg_fat(qs)
 
-    ctx = {"servicos": qs, "valor_total": vt, "valor_pago": vp,
-           "saldo": saldo, "data_inicio": di, "data_fim": df}
+    ctx = {"servicos": qs, "valor_total": vt, "data_inicio": di, "data_fim": df}
     if request.GET.get("pdf"):
         return _pdf_response(
-            _pdf_financeiro(qs, vt, vp, saldo, _periodo_str(di, df)),
-            "financeiro.pdf"
+            _pdf_financeiro(qs, vt, _periodo_str(di, df)), "financeiro.pdf"
         )
     return render(request, "financeiro.html", ctx)
 
 
 def servicos_por_dentista(request):
     di, df = _filtros_periodo(request)
-    # Agrega direto no ORM usando o related_name 'servicos'
     dentistas = (Dentista.objects
                  .filter(servicos__data_entrada__gte=di,
                          servicos__data_entrada__lte=df)
                  .annotate(
                      total_servicos=Count("servicos"),
                      valor_total=Sum("servicos__valor_servico"),
-                     valor_pago=Sum("servicos__valor_pago"),
                  )
                  .distinct()
                  .order_by("nome"))
@@ -440,71 +388,56 @@ def servicos_por_dentista(request):
     return render(request, "servicos_dentista.html", ctx)
 
 
+def detalhe_dentista(request, pk):
+    dentista = Dentista.objects.get(pk=pk)
+    di, df = _filtros_periodo(request)
+
+    qs = (Servico.objects
+          .filter(dentista=dentista,
+                  data_entrada__gte=di,
+                  data_entrada__lte=df)
+          .order_by("-data_entrada"))
+
+    status_filtro = request.GET.get("status", "")
+    if status_filtro:
+        qs = qs.filter(status=status_filtro)
+
+    vt = _agg_fat(qs)
+
+    ctx = {
+        "dentista":     dentista,
+        "servicos":     qs,
+        "valor_total":  vt,
+        "data_inicio":  di,
+        "data_fim":     df,
+        "status_filtro": status_filtro,
+        "statuses":     Servico.STATUS_CHOICES,
+    }
+    if request.GET.get("pdf"):
+        return _pdf_response(
+            _pdf_detalhe_dentista(dentista, qs, vt, _periodo_str(di, df)),
+            f"dentista_{dentista.pk}.pdf"
+        )
+    return render(request, "detalhe_dentista.html", ctx)
+
+
 def servicos_atrasados(request):
     hoje = timezone.now().date()
     qs = (Servico.objects
           .filter(~Q(status__in=["ENT", "CAN"]),
                   data_prevista_saida__lt=hoje)
-          .select_related("dentista", "cliente")
+          .select_related("dentista")
           .order_by("data_prevista_saida"))
 
-    ctx = {"servicos": qs, "hoje": hoje}
+    servicos = []
+    for s in qs:
+        s.dias_atraso = (hoje - s.data_prevista_saida).days if s.data_prevista_saida else 0
+        servicos.append(s)
+
+    ctx = {"servicos": servicos, "hoje": hoje}
     if request.GET.get("pdf"):
-        return _pdf_response(_pdf_atrasados(qs), "atrasados.pdf")
+        return _pdf_response(_pdf_atrasados(servicos), "atrasados.pdf")
     return render(request, "atrasados.html", ctx)
-
-
-def servicos_por_cliente(request):
-    di, df = _filtros_periodo(request)
-    clientes = (Cliente.objects
-                .filter(servicos_como_cliente__data_entrada__gte=di,
-                        servicos_como_cliente__data_entrada__lte=df)
-                .annotate(
-                    total_servicos=Count("servicos_como_cliente"),
-                    valor_total=Sum("servicos_como_cliente__valor_servico"),
-                    valor_pago=Sum("servicos_como_cliente__valor_pago"),
-                )
-                .distinct()
-                .order_by("nome"))
-
-    ctx = {"clientes": clientes, "data_inicio": di, "data_fim": df}
-    if request.GET.get("pdf"):
-        return _pdf_response(
-            _pdf_clientes(clientes, _periodo_str(di, df)), "clientes.pdf"
-        )
-    return render(request, "servicos_cliente.html", ctx)
-
-def servicos_por_laboratorio(request):
-    di, df = _filtros_periodo(request)
-    labs = (Laboratorio.objects
-            .filter(servicos__data_entrada__gte=di,
-                    servicos__data_entrada__lte=df)
-            .annotate(
-                total_servicos=Count("servicos"),
-                valor_total=Sum("servicos__valor_servico"),
-                valor_pago=Sum("servicos__valor_pago"),
-            )
-            .distinct()
-            .order_by("nome"))
-
-    # Serviços sem laboratório (laboratorio=None)
-    sem_lab = (Servico.objects
-               .filter(data_entrada__gte=di, data_entrada__lte=df,
-                       laboratorio__isnull=True)
-               .aggregate(total=Count("id"),
-                          vt=Sum("valor_servico"),
-                          vp=Sum("valor_pago")))
-
-    ctx = {
-        "laboratorios": labs,
-        "sem_lab": sem_lab,
-        "data_inicio": di, "data_fim": df,
-    }
-    if request.GET.get("pdf"):
-        return _pdf_response(
-            _pdf_laboratorios(labs, _periodo_str(di, df)), "laboratorios.pdf"
-        )
-    return render(request, "servicos_laboratorio.html", ctx)
 
 
 def servicos_por_status(request):
@@ -539,12 +472,11 @@ def relatorio_periodo(request):
     di, df = _filtros_periodo(request)
     qs = (Servico.objects
           .filter(data_entrada__gte=di, data_entrada__lte=df)
-          .select_related("dentista", "cliente")
+          .select_related("dentista")
           .order_by("data_entrada"))
-    vt, vp, saldo = _agg(qs)
+    vt = _agg_fat(qs)
 
-    ctx = {"servicos": qs, "valor_total": vt, "valor_pago": vp,
-           "saldo": saldo, "data_inicio": di, "data_fim": df}
+    ctx = {"servicos": qs, "valor_total": vt, "data_inicio": di, "data_fim": df}
     if request.GET.get("pdf"):
         return _pdf_response(_pdf_periodo(qs, di, df), "periodo.pdf")
     return render(request, "periodo.html", ctx)

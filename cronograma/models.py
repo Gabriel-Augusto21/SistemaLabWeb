@@ -1,6 +1,6 @@
 from django.db import models
 from dentista.models import Dentista
-from cliente.models import Cliente
+#from cliente.models import Cliente
 
 class Cronograma(models.Model):
     PRIORIDADE_CHOICES = [
@@ -14,7 +14,7 @@ class Cronograma(models.Model):
     descricao = models.TextField(blank=True)
     
     dentista = models.ForeignKey(Dentista, on_delete=models.CASCADE, related_name='cronogramas')
-    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
+    #cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
     
     data_inicio = models.DateTimeField()
     data_fim = models.DateTimeField()

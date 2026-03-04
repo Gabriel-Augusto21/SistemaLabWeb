@@ -1,8 +1,6 @@
 from django.db import models
 from dentista.models import Dentista
-from cliente.models import Cliente
-from laboratorio.models import Laboratorio
-from django.db.models import Prefetch
+
 
 class Servico(models.Model):
     STATUS_CHOICES = [
@@ -14,8 +12,7 @@ class Servico(models.Model):
     ]
     
     dentista = models.ForeignKey(Dentista, on_delete=models.CASCADE, null=True, blank=True, related_name='servicos')
-    laboratorio = models.ForeignKey(Laboratorio, on_delete=models.SET_NULL, null=True, blank=True, related_name='servicos')
-    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True, related_name='servicos_como_cliente')
+    paciente = models.CharField(max_length=200, blank=True)
     
     tipo_protese = models.CharField(max_length=100)
     material = models.CharField(max_length=100, blank=True)

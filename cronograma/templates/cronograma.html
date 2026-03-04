@@ -8,31 +8,30 @@
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
 
   :root {
-  --bg: #f3f4f6;        /* fundo da página */
-  --calendar-bg: #ffffff; 
-  --surface: #f9fafb; 
-  --surface2: #eef2f7;
-  --border: #e5e7eb;
-  --text: #111827;
-  --muted: #6b7280;
-  --accent: #2563eb;
-
-  --verde: #22c55e;
-  --vermelho: #ef4444;
-  --laranja: #f97316;
-  --azul: #3b82f6;
-  --roxo: #8b5cf6;
-}
+    --bg: #f3f4f6;
+    --calendar-bg: #ffffff;
+    --surface: #f9fafb;
+    --surface2: #eef2f7;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --verde: #22c55e;
+    --vermelho: #ef4444;
+    --laranja: #f97316;
+    --azul: #3b82f6;
+    --roxo: #8b5cf6;
+  }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
- body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+  }
 
-  /* ───────── NAVBAR / HEADER ───────── */
+  /* ───────── HEADER ───────── */
   .cal-header {
     display: flex;
     align-items: center;
@@ -101,6 +100,7 @@
     width: 9px;
     height: 9px;
     border-radius: 50%;
+    flex-shrink: 0;
   }
 
   /* ───────── GRADE ───────── */
@@ -170,7 +170,7 @@
     margin-bottom: .5rem;
     background: white;
     border: 1px solid var(--border);
-    transition: all .2s ease;
+    flex-shrink: 0;
   }
 
   .cell.hoje .num {
@@ -179,7 +179,7 @@
     border: none;
   }
 
-  /* ───────── CHIPS ───────── */
+  /* ───────── CHIPS — DESKTOP ───────── */
   .chips {
     display: flex;
     flex-direction: column;
@@ -197,15 +197,18 @@
     transition: all .2s ease;
   }
 
-  .chip:hover {
-    transform: scale(1.03);
-  }
+  .chip:hover { transform: scale(1.03); }
 
   .chip.rec   { background: rgba(59,130,246,.12);  color: var(--azul); }
-  .chip.prod  { background: rgba(139,92,246,.12); color: var(--roxo); }
+  .chip.prod  { background: rgba(139,92,246,.12);  color: var(--roxo); }
   .chip.fin   { background: rgba(249,115,22,.12);  color: var(--laranja); }
-  .chip.ent   { background: rgba(34,197,94,.12);  color: var(--verde); }
-  .chip.atras { background: rgba(239,68,68,.12);  color: var(--vermelho); }
+  .chip.ent   { background: rgba(34,197,94,.12);   color: var(--verde); }
+  .chip.atras { background: rgba(239,68,68,.12);   color: var(--vermelho); }
+
+  /* contador compacto — só aparece no mobile */
+  .chip-count {
+    display: none;
+  }
 
   .mais {
     font-size: .7rem;
@@ -213,16 +216,61 @@
     margin-top: 4px;
   }
 
-  /* ───────── CLIQUE (JS EFFECT) ───────── */
-  .cell:active {
-    transform: scale(.97);
-  }
+  .cell:active { transform: scale(.97); }
 
-  /* ───────── RESPONSIVO ───────── */
+  /* ───────── MOBILE ───────── */
   @media (max-width: 640px) {
-    .cal-grid { padding: 1rem; gap: 6px; }
-    .cell { min-height: 80px; padding: .5rem; }
+    .cal-header { padding: 1.2rem 1rem .8rem; }
+    .cal-header h1 { font-size: 1.3rem; }
+    .legenda { padding: .6rem 1rem; gap: .8rem; }
+    .cal-grid { padding: .6rem; gap: 5px; }
+
+    .cell {
+      min-height: 56px;
+      padding: .4rem .3rem;
+      border-radius: 10px;
+    }
+
+    .num {
+      width: 22px;
+      height: 22px;
+      font-size: .75rem;
+      margin-bottom: .25rem;
+    }
+
+    /* esconde chips com texto, mostra só o contador colorido */
     .chip { display: none; }
+    .mais { display: none; }
+
+    .chip-count {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .cc-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* linha compacta: bolinhas coloridas + número */
+    .cc-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: .65rem;
+      font-weight: 600;
+    }
+
+    .cc-row.rec   { color: var(--azul); }
+    .cc-row.prod  { color: var(--roxo); }
+    .cc-row.fin   { color: var(--laranja); }
+    .cc-row.ent   { color: var(--verde); }
+    .cc-row.atras { color: var(--vermelho); }
+
+    .dow { font-size: .65rem; }
   }
 </style>
 {% endblock %}
@@ -265,24 +313,61 @@
           <div class="cell {% if cel.is_hoje %}hoje{% elif cel.is_passado %}passado{% endif %}">
             <a class="cell-link" href="{% url 'cronograma:dia_detalhe' cel.data.year cel.data.month cel.data.day %}">
               <span class="num">{{ cel.dia }}</span>
+
               <div class="chips">
                 {% for s in cel.servicos|slice:":4" %}
                   {% if s.atrasado %}
                     <span class="chip atras" title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
                   {% elif s.status == 'REC' %}
-                    <span class="chip rec"  title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
+                    <span class="chip rec"   title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
                   {% elif s.status == 'PROD' %}
-                    <span class="chip prod" title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
+                    <span class="chip prod"  title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
                   {% elif s.status == 'FIN' %}
-                    <span class="chip fin"  title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
+                    <span class="chip fin"   title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
                   {% elif s.status == 'ENT' %}
-                    <span class="chip ent"  title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
+                    <span class="chip ent"   title="{{ s.tipo_protese }} — {{ s.dentista.nome }}">{{ s.tipo_protese }}</span>
                   {% endif %}
                 {% endfor %}
                 {% if cel.servicos|length > 4 %}
                   <span class="mais">+{{ cel.servicos|length|add:"-4" }} mais</span>
                 {% endif %}
               </div>
+
+              {% if cel.servicos %}
+              <div class="chip-count">
+                {% with atras=0 rec=0 prod=0 fin=0 ent=0 %}
+                  {% for s in cel.servicos %}
+                    {% if s.atrasado %}
+                      <span class="cc-row atras">
+                        <span class="cc-dot" style="background:var(--vermelho)"></span>
+                        {{ s.tipo_protese|truncatechars:8 }}
+                      </span>
+                    {% elif s.status == 'REC' %}
+                      <span class="cc-row rec">
+                        <span class="cc-dot" style="background:var(--azul)"></span>
+                        {{ s.tipo_protese|truncatechars:8 }}
+                      </span>
+                    {% elif s.status == 'PROD' %}
+                      <span class="cc-row prod">
+                        <span class="cc-dot" style="background:var(--roxo)"></span>
+                        {{ s.tipo_protese|truncatechars:8 }}
+                      </span>
+                    {% elif s.status == 'FIN' %}
+                      <span class="cc-row fin">
+                        <span class="cc-dot" style="background:var(--laranja)"></span>
+                        {{ s.tipo_protese|truncatechars:8 }}
+                      </span>
+                    {% elif s.status == 'ENT' %}
+                      <span class="cc-row ent">
+                        <span class="cc-dot" style="background:var(--verde)"></span>
+                        {{ s.tipo_protese|truncatechars:8 }}
+                      </span>
+                    {% endif %}
+                  {% endfor %}
+                {% endwith %}
+              </div>
+              {% endif %}
+
             </a>
           </div>
         {% endif %}
@@ -290,6 +375,5 @@
     {% endfor %}
 
   </div>
-</div>
 </div>
 {% endblock %}

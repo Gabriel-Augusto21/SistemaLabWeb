@@ -28,7 +28,7 @@
           <tr>
             <th>Prótese</th>
             <th>Dentista</th>
-            <th>Cliente</th>
+            <th>Paciente</th>
             <th>Saída Prevista</th>
             <th class="text-center">Dias de Atraso</th>
             <th>Status</th>
@@ -41,7 +41,7 @@
           <tr>
             <td><strong>{{ s.tipo_protese }}</strong></td>
             <td>{{ s.dentista.nome|default:"-" }}</td>
-            <td>{{ s.cliente.nome|default:"-" }}</td>
+            <td>{{ s.paciente|default:"-" }}</td>
             <td>{{ s.data_prevista_saida|date:"d/m/Y" }}</td>
             <td class="text-center">
               <span class="badge bg-danger">{{ s.dias_atraso }} dia(s)</span>

@@ -16,16 +16,16 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    
+
                     <div class="mb-3">
                         <label for="tipo_protese" class="form-label">Tipo de Prótese *</label>
-                        <input type="text" class="form-control" id="tipo_protese" name="tipo_protese" 
+                        <input type="text" class="form-control" id="tipo_protese" name="tipo_protese"
                                value="{% if servico %}{{ servico.tipo_protese }}{% endif %}" required>
                     </div>
 
                     <div class="mb-3">
                         <label for="material" class="form-label">Material</label>
-                        <input type="text" class="form-control" id="material" name="material" 
+                        <input type="text" class="form-control" id="material" name="material"
                                value="{% if servico %}{{ servico.material }}{% endif %}">
                     </div>
 
@@ -47,38 +47,21 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="laboratorio" class="form-label">Laboratório</label>
-                        <select class="form-select" id="laboratorio" name="laboratorio">
-                            <option value="">Selecione um laboratório</option>
-                            {% for l in laboratorios %}
-                                <option value="{{ l.id }}" {% if servico.laboratorio_id == l.id %}selected{% endif %}>
-                                    {{ l.nome }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="cliente" class="form-label">Cliente</label>
-                        <select class="form-select" id="cliente" name="cliente">
-                            <option value="">Nenhum</option>
-                            {% for c in clientes %}
-                                <option value="{{ c.id }}" {% if servico.cliente_id == c.id %}selected{% endif %}>
-                                    {{ c.nome }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                        <label for="paciente" class="form-label">Paciente</label>
+                        <input type="text" class="form-control" id="paciente" name="paciente"
+                               value="{% if servico %}{{ servico.paciente }}{% endif %}"
+                               placeholder="Nome do paciente">
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="data_entrada" class="form-label">Data de Entrada *</label>
-                            <input type="date" class="form-control" id="data_entrada" name="data_entrada" 
+                            <input type="date" class="form-control" id="data_entrada" name="data_entrada"
                                    value="{% if servico %}{{ servico.data_entrada|date:'Y-m-d' }}{% endif %}" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="data_prevista_saida" class="form-label">Data Prevista de Saída</label>
-                            <input type="date" class="form-control" id="data_prevista_saida" name="data_prevista_saida" 
+                            <input type="date" class="form-control" id="data_prevista_saida" name="data_prevista_saida"
                                    value="{% if servico %}{{ servico.data_prevista_saida|date:'Y-m-d' }}{% endif %}">
                         </div>
                     </div>
@@ -86,14 +69,14 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="valor_servico" class="form-label">Valor do Serviço</label>
-                            <input type="number" class="form-control" id="valor_servico" name="valor_servico" 
+                            <input type="number" class="form-control" id="valor_servico" name="valor_servico"
                                    step="0.01" value="{% if servico %}{{ servico.valor_servico }}{% endif %}">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <!-- <div class="col-md-6 mb-3">
                             <label for="valor_pago" class="form-label">Valor Pago</label>
-                            <input type="number" class="form-control" id="valor_pago" name="valor_pago" 
+                            <input type="number" class="form-control" id="valor_pago" name="valor_pago"
                                    step="0.01" value="{% if servico %}{{ servico.valor_pago }}{% endif %}">
-                        </div>
+                        </div> -->
                     </div>
 
                     <div class="mb-3">

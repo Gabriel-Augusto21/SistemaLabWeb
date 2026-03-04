@@ -17,29 +17,12 @@
 
 {% include "_filtro_periodo.html" %}
 
-{# Resumo #}
 <div class="row g-3 mb-4">
   <div class="col-md-4">
     <div class="card border-0 shadow-sm text-center">
       <div class="card-body">
         <p class="text-muted small mb-1">Faturamento</p>
         <h4 class="text-primary fw-bold mb-0">R$ {{ valor_total|floatformat:2 }}</h4>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card border-0 shadow-sm text-center">
-      <div class="card-body">
-        <p class="text-muted small mb-1">Recebido</p>
-        <h4 class="text-success fw-bold mb-0">R$ {{ valor_pago|floatformat:2 }}</h4>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card border-0 shadow-sm text-center">
-      <div class="card-body">
-        <p class="text-muted small mb-1">Saldo</p>
-        <h4 class="text-danger fw-bold mb-0">R$ {{ saldo|floatformat:2 }}</h4>
       </div>
     </div>
   </div>
@@ -53,12 +36,11 @@
           <tr>
             <th>Prótese</th>
             <th>Dentista</th>
-            <th>Cliente</th>
+            <th>Paciente</th>
             <th>Entrada</th>
             <th>Saída Prev.</th>
             <th>Status</th>
             <th class="text-end">Vl. Serviço</th>
-            <th class="text-end">Vl. Pago</th>
           </tr>
         </thead>
         <tbody>
@@ -66,7 +48,7 @@
           <tr>
             <td><strong>{{ s.tipo_protese }}</strong></td>
             <td>{{ s.dentista.nome|default:"-" }}</td>
-            <td>{{ s.cliente.nome|default:"-" }}</td>
+            <td>{{ s.paciente|default:"-" }}</td>
             <td>{{ s.data_entrada|date:"d/m/Y"|default:"-" }}</td>
             <td>{{ s.data_prevista_saida|date:"d/m/Y"|default:"-" }}</td>
             <td>
@@ -75,10 +57,9 @@
               </span>
             </td>
             <td class="text-end">R$ {{ s.valor_servico|floatformat:2 }}</td>
-            <td class="text-end">R$ {{ s.valor_pago|floatformat:2 }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="8" class="text-center text-muted py-3">Nenhum serviço no período.</td></tr>
+          <tr><td colspan="7" class="text-center text-muted py-3">Nenhum serviço no período.</td></tr>
           {% endfor %}
         </tbody>
       </table>

@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'servico',
     'cronograma',
     'relatorios',
+    'saidas',
 ]
 
 MIDDLEWARE = [

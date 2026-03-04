@@ -1,0 +1,46 @@
+{% extends "master.html" %}
+
+{% block title %}Detalhe da Saída{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1><i class="fas fa-arrow-down"></i> {{ saida.tipo }}</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'saida:editar_saida' saida.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'saida:deletar_saida' saida.pk %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Deletar
+            </a>
+            <a href="{% url 'saida:saida' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> Informações da Saída
+            </div>
+            <div class="card-body">
+                <p><strong>Tipo:</strong> {{ saida.tipo }}</p>
+                <p><strong>Valor:</strong> <span class="text-danger fw-bold">R$ {{ saida.valor }}</span></p>
+                <p><strong>Data:</strong> {{ saida.data|date:"d/m/Y" }}</p>
+                {% if saida.descricao %}
+                    <p><strong>Descrição:</strong> {{ saida.descricao }}</p>
+                {% endif %}
+                <hr>
+                <p class="text-muted small mb-0">
+                    Registrado em {{ saida.created_at|date:"d/m/Y H:i" }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

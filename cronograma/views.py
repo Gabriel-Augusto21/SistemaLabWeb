@@ -30,7 +30,7 @@ def cronograma(request):
     servicos_mes = Servico.objects.filter(
         data_prevista_saida__gte=primeiro_dia,
         data_prevista_saida__lte=ultimo_dia,
-    ).select_related('dentista', 'cliente').exclude(status='CAN')
+    ).select_related('dentista').exclude(status='CAN')
 
     # Agrupar por dia
     dias_servicos = {}
@@ -74,7 +74,7 @@ def dia_detalhe(request, ano, mes, dia):
 
     servicos = Servico.objects.filter(
         data_prevista_saida=data_dia,
-    ).select_related('dentista', 'cliente').exclude(status='CAN').order_by('dentista__nome')
+    ).select_related('dentista').exclude(status='CAN').order_by('dentista__nome')
 
     return render(request, 'dia_detalhe.html', {
         'data': data_dia,

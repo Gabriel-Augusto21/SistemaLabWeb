@@ -1,0 +1,342 @@
+{% extends 'master.html' %}
+
+{% block title %}Saídas — {{ mes_nome }} {{ ano }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f3f4f6;
+    --surface: #f9fafb;
+    --surface2: #eef2f7;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --vermelho: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.8rem 2.5rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    background: #ffffff;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .cal-header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.9rem;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .cal-nav {
+    display: flex;
+    gap: .6rem;
+    align-items: center;
+  }
+
+  .cal-nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    min-width: 36px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    font-size: .85rem;
+    font-weight: 500;
+    transition: all .2s ease;
+  }
+
+  .cal-nav a:hover {
+    background: var(--accent);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(37,99,235,.25);
+  }
+
+  .cal-wrap { overflow-x: auto; background: #fff; border-radius: 0 0 14px 14px; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+    padding: 2rem;
+  }
+
+  .dow {
+    text-align: center;
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: .5rem;
+  }
+
+  .cell {
+    background: var(--surface);
+    min-height: 100px;
+    padding: .7rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    transition: all .25s ease;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .cell.vazia {
+    background: transparent;
+    border: none;
+    cursor: default;
+  }
+
+  .cell:not(.vazia):hover {
+    transform: translateY(-4px);
+    background: var(--surface2);
+    box-shadow: 0 10px 20px rgba(0,0,0,.08);
+  }
+
+  .cell.hoje { border: 2px solid var(--accent); }
+
+  .num {
+    font-size: .85rem;
+    font-weight: 600;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: .5rem;
+    background: white;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .cell.hoje .num {
+    background: var(--accent);
+    color: white;
+    border: none;
+  }
+
+  /* ── chips desktop ── */
+  .chips {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .chip {
+    font-size: .7rem;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(239,68,68,.12);
+    color: var(--vermelho);
+    text-decoration: none;
+    display: block;
+    transition: all .2s ease;
+  }
+
+  .chip:hover {
+    background: rgba(239,68,68,.22);
+    color: var(--vermelho);
+    transform: scale(1.03);
+  }
+
+  .mais {
+    font-size: .7rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* contador compacto — só aparece no mobile */
+  .chip-count { display: none; }
+
+  .cell:active { transform: scale(.97); }
+
+  /* ── mobile ── */
+  @media (max-width: 640px) {
+    .cal-header { padding: 1.2rem 1rem .8rem; }
+    .cal-header h1 { font-size: 1.3rem; }
+    .cal-grid { padding: .6rem; gap: 5px; }
+
+    .cell {
+      min-height: 56px;
+      padding: .4rem .3rem;
+      border-radius: 10px;
+    }
+
+    .num {
+      width: 22px;
+      height: 22px;
+      font-size: .75rem;
+      margin-bottom: .25rem;
+    }
+
+    .chip { display: none; }
+    .mais { display: none; }
+
+    .chip-count {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .cc-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: .65rem;
+      font-weight: 600;
+      color: var(--vermelho);
+    }
+
+    .cc-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--vermelho);
+      flex-shrink: 0;
+    }
+
+    .dow { font-size: .65rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Cabeçalho -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 style="font-weight:600;"><i class="fas fa-arrow-down"></i> Saídas</h2>
+  <a href="{% url 'saida:criar_saida' %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Nova Saída
+  </a>
+</div>
+
+<!-- Calendário -->
+<div class="card mb-4" style="padding:0; overflow:hidden;">
+  <div class="cal-header">
+    <h1>{{ mes_nome }} {{ ano }}</h1>
+    <nav class="cal-nav">
+      <a href="?mes={{ mes_anterior.mes }}&ano={{ mes_anterior.ano }}">&#8592;</a>
+      <a href="?mes={{ hoje.month }}&ano={{ hoje.year }}">Hoje</a>
+      <a href="?mes={{ mes_seguinte.mes }}&ano={{ mes_seguinte.ano }}">&#8594;</a>
+    </nav>
+  </div>
+
+  <div class="cal-wrap">
+    <div class="cal-grid">
+      <div class="dow">Seg</div>
+      <div class="dow">Ter</div>
+      <div class="dow">Qua</div>
+      <div class="dow">Qui</div>
+      <div class="dow">Sex</div>
+      <div class="dow">Sáb</div>
+      <div class="dow">Dom</div>
+
+      {% for semana in semanas %}
+        {% for cel in semana %}
+          {% if cel is None %}
+            <div class="cell vazia"></div>
+          {% else %}
+            <div class="cell {% if cel.is_hoje %}hoje{% endif %}">
+              <span class="num">{{ cel.dia }}</span>
+
+              <!-- chips — desktop -->
+              <div class="chips">
+                {% for s in cel.saidas|slice:":3" %}
+                  <a class="chip" href="{% url 'saida:detalhe_saida' s.pk %}" title="R$ {{ s.valor }}">
+                    {{ s.tipo }}
+                  </a>
+                {% endfor %}
+                {% if cel.saidas|length > 3 %}
+                  <span class="mais">+{{ cel.saidas|length|add:"-3" }} mais</span>
+                {% endif %}
+              </div>
+
+              <!-- bolinhas compactas — mobile -->
+              {% if cel.saidas %}
+              <div class="chip-count">
+                {% for s in cel.saidas %}
+                  <a class="cc-row" href="{% url 'saida:detalhe_saida' s.pk %}" style="text-decoration:none;">
+                    <span class="cc-dot"></span>
+                    {{ s.tipo|truncatechars:8 }}
+                  </a>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Total -->
+<div class="alert alert-danger d-flex justify-content-between align-items-center">
+  <span><i class="fas fa-coins"></i> Total no período:</span>
+  <strong>R$ {{ total }}</strong>
+</div>
+
+<!-- Tabela -->
+{% if saidas %}
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th><i class="fas fa-tag"></i> Tipo</th>
+          <th><i class="fas fa-dollar-sign"></i> Valor</th>
+          <th><i class="fas fa-calendar"></i> Data</th>
+          <th>Descrição</th>
+          <th width="150">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in saidas %}
+          <tr>
+            <td>{{ s.tipo }}</td>
+            <td>R$ {{ s.valor }}</td>
+            <td>{{ s.data|date:"d/m/Y" }}</td>
+            <td>{{ s.descricao|default:"-"|truncatechars:40 }}</td>
+            <td>
+              <a href="{% url 'saida:detalhe_saida' s.pk %}" class="btn btn-sm btn-info">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a href="{% url 'saida:editar_saida' s.pk %}" class="btn btn-sm btn-warning">
+                <i class="fas fa-edit"></i>
+              </a>
+              <a href="{% url 'saida:deletar_saida' s.pk %}" class="btn btn-sm btn-danger">
+                <i class="fas fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> Nenhuma saída encontrada.
+    <a href="{% url 'saida:criar_saida' %}" class="alert-link">Registre uma nova saída</a>
+  </div>
+{% endif %}
+
+{% endblock %}

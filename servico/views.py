@@ -1,42 +1,37 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Q
 from .models import Servico
 from dentista.models import Dentista
-from cliente.models import Cliente
-from laboratorio.models import Laboratorio
+
 
 def servico(request):
     servicos = Servico.objects.all()
     status = request.GET.get('status')
     dentista = request.GET.get('dentista')
-    laboratorio = request.GET.get('laboratorio')
     
     if status:
         servicos = servicos.filter(status=status)
     if dentista:
         servicos = servicos.filter(dentista_id=dentista)
-    if laboratorio:
-        servicos = servicos.filter(laboratorio_id=laboratorio)
     
     return render(request, 'servico.html', {
         'servicos': servicos,
         'dentistas': Dentista.objects.all(),
-        'laboratorios': Laboratorio.objects.all(),
         'statuses': Servico.STATUS_CHOICES
     })
+
 
 def detalhe_servico(request, pk):
     servico = get_object_or_404(Servico, pk=pk)
     return render(request, 'detalhe_servico.html', {'servico': servico})
+
 
 def criar_servico(request):
     if request.method == 'POST':
         try:
             Servico.objects.create(
                 dentista_id=request.POST.get('dentista') or None,
-                laboratorio_id=request.POST.get('laboratorio') or None,
-                cliente_id=request.POST.get('cliente') or None,
+                paciente=request.POST.get('paciente', ''),
                 tipo_protese=request.POST.get('tipo_protese'),
                 material=request.POST.get('material'),
                 descricao=request.POST.get('descricao'),
@@ -52,17 +47,15 @@ def criar_servico(request):
     
     return render(request, 'form_servico.html', {
         'dentistas': Dentista.objects.all(),
-        'clientes': Cliente.objects.all(),
-        'laboratorios': Laboratorio.objects.all(),
         'statuses': Servico.STATUS_CHOICES
     })
+
 
 def editar_servico(request, pk):
     servico = get_object_or_404(Servico, pk=pk)
     if request.method == 'POST':
         servico.dentista_id = request.POST.get('dentista') or None
-        servico.laboratorio_id = request.POST.get('laboratorio') or None
-        servico.cliente_id = request.POST.get('cliente') or None
+        servico.paciente = request.POST.get('paciente', '')
         servico.tipo_protese = request.POST.get('tipo_protese')
         servico.material = request.POST.get('material')
         servico.descricao = request.POST.get('descricao')
@@ -79,10 +72,9 @@ def editar_servico(request, pk):
         'servico': servico,
         'edit': True,
         'dentistas': Dentista.objects.all(),
-        'clientes': Cliente.objects.all(),
-        'laboratorios': Laboratorio.objects.all(),
         'statuses': Servico.STATUS_CHOICES
     })
+
 
 def deletar_servico(request, pk):
     servico = get_object_or_404(Servico, pk=pk)

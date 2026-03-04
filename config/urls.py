@@ -10,4 +10,5 @@ urlpatterns = [
     path('cronograma/', include('cronograma.urls')),
     path('relatorios/', include('relatorios.urls')),
     path('laboratorio/', include('laboratorio.urls')),
+    path('saidas/', include('saidas.urls')),
 ]
