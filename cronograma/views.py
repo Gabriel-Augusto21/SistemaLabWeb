@@ -26,19 +26,16 @@ def cronograma(request):
     primeiro_dia = date(ano, mes, 1)
     ultimo_dia = date(ano, mes, calendar.monthrange(ano, mes)[1])
 
-    # Serviços com entrega prevista neste mês (exceto cancelados)
     servicos_mes = Servico.objects.filter(
         data_prevista_saida__gte=primeiro_dia,
         data_prevista_saida__lte=ultimo_dia,
     ).select_related('dentista').exclude(status='CAN')
 
-    # Agrupar por dia
     dias_servicos = {}
     for s in servicos_mes:
         dia = s.data_prevista_saida.day
         dias_servicos.setdefault(dia, []).append(s)
 
-    # Montar semanas
     semanas = []
     for semana in calendar.monthcalendar(ano, mes):
         linha = []

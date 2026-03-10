@@ -1,6 +1,3 @@
-"""
-Django settings for pypel project.
-"""
 import os
 import dj_database_url
 from django.contrib.messages import constants as messages

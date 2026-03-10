@@ -2,24 +2,36 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import Servico
 from dentista.models import Dentista
-
+from django.core.paginator import Paginator
 
 def servico(request):
     servicos = Servico.objects.all()
     status = request.GET.get('status')
     dentista = request.GET.get('dentista')
-    
+
     if status:
         servicos = servicos.filter(status=status)
+
     if dentista:
         servicos = servicos.filter(dentista_id=dentista)
-    
+
+    paginator = Paginator(servicos, 5)
+    page = request.GET.get('page')
+
+    servicos_paginados = paginator.get_page(page)
+
+    page_range = list(paginator.get_elided_page_range(
+        servicos_paginados.number,
+        on_each_side=2,
+        on_ends=1
+    ))
+
     return render(request, 'servico.html', {
-        'servicos': servicos,
+        'servicos': servicos_paginados,
+        'page_range': page_range,
         'dentistas': Dentista.objects.all(),
         'statuses': Servico.STATUS_CHOICES
     })
-
 
 def parse_decimal(value):
     if not value:

@@ -103,4 +103,22 @@
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+    const campoValor = document.getElementById('valor_servico');
+
+    campoValor.addEventListener('blur', function () {
+        let val = this.value.replace('.', '').replace(',', '.');
+        let num = parseFloat(val);
+        if (!isNaN(num)) {
+            this.value = num.toFixed(2).replace('.', ',');
+        }
+    });
+
+    campoValor.addEventListener('focus', function () {
+        this.select();
+    });
+</script>
+{% endblock %}
 {% endblock %}

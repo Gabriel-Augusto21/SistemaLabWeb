@@ -1,76 +1,10 @@
 {% extends "master.html" %}
 {% block title %}Dashboard — Relatórios{% endblock %}
+{% load static %}
+
 
 {% block content %}
-
-<style>
-body {
-    background-color: #ffffff;
-}
-
-h1, h3, h4 {
-    color: #000000;
-}
-
-.card {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 14px;
-    transition: all 0.25s ease;
-}
-
-.card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 8px 22px rgba(0,0,0,0.08);
-}
-
-.card-header {
-    background-color: #111111;
-    color: #ffffff;
-    border-radius: 14px 14px 0 0 !important;
-    font-weight: 600;
-}
-
-.btn {
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.btn:hover {
-    transform: scale(1.05);
-}
-
-.kpi-card h3,
-.kpi-card h4 {
-    font-weight: 700;
-}
-
-.relatorio-card {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 14px;
-    padding: 20px;
-    text-align: center;
-    transition: all 0.25s ease;
-    cursor: pointer;
-}
-
-.relatorio-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-}
-
-.relatorio-card h5 {
-    font-weight: 700;
-    color: #000000;
-    margin-top: 10px;
-}
-
-.relatorio-card p {
-    font-size: 0.9rem;
-    color: #555555;
-}
-</style>
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1 class="h3 mb-0">

@@ -1,0 +1,46 @@
+.pagination .page-link {
+        background-color: white;
+        border-color: black;
+        color: black;
+    }
+
+.pagination .page-link:visited {
+        color: black;
+    }
+
+.pagination .page-item.active .page-link {
+        background-color: #343a40;
+        border-color: black;
+        color: white;
+        box-shadow: none;
+    }
+
+.pagination .page-link:hover {
+        background-color: #e2e6ea;
+        border-color: black;
+        color: black;
+    }
+
+.pagination .page-item.disabled .page-link {
+        background-color: white;
+        border-color: #ccc;
+        color: #aaa;
+    } 
+
+.pagination {
+    --bs-pagination-color: black;
+    --bs-pagination-bg: white;
+    --bs-pagination-border-color: black;
+    --bs-pagination-hover-color: black;
+    --bs-pagination-hover-bg: #e2e6ea;
+    --bs-pagination-hover-border-color: black;
+    --bs-pagination-focus-color: black;
+    --bs-pagination-focus-bg: #e2e6ea;
+    --bs-pagination-focus-box-shadow: none;
+    --bs-pagination-active-color: white;
+    --bs-pagination-active-bg: #343a40;
+    --bs-pagination-active-border-color: black;
+    --bs-pagination-disabled-color: #aaa;
+    --bs-pagination-disabled-bg: white;
+    --bs-pagination-disabled-border-color: #ccc;
+}

@@ -2,10 +2,19 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
 from .models import Dentista
+from django.core.paginator import Paginator
 
 def dentista(request):
     dentistas = Dentista.objects.all()
-    return render(request, 'dentista.html', {'dentistas': dentistas})
+    paginator = Paginator(dentistas, 5)
+    page = request.GET.get('page')
+    dentistas_paginados = paginator.get_page(page)
+    page_range = list(paginator.get_elided_page_range(
+        dentistas_paginados.number,
+        on_each_side=2,
+        on_ends=1
+    ))
+    return render(request, 'dentista.html', {'dentistas': dentistas_paginados, 'page_range': page_range})
 
 def detalhe_dentista(request, pk):
     dentista = get_object_or_404(Dentista, pk=pk)
