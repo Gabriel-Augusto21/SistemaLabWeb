@@ -119,24 +119,11 @@ def _pdf_response(conteudo: bytes, nome: str) -> HttpResponse:
 
 
 def _tabela_segura(tabela, linhas, estilo):
-    cw = tabela._argW
-    n_dados = len(linhas) - 1 
+    n_dados = len(linhas) - 1  
 
     if n_dados <= 2:
         return KeepTogether(tabela)
-
-    linhas_corpo = linhas[1:]
-    linhas_principal = [linhas[0]] + linhas_corpo[:-2]
-    linhas_final     = [linhas[0]] + linhas_corpo[-2:]
-
-    t_principal = Table(linhas_principal, colWidths=cw, repeatRows=1,
-                        splitByRow=True, splitInRow=0)
-    t_principal.setStyle(estilo)
-
-    t_final = Table(linhas_final, colWidths=cw, repeatRows=1)
-    t_final.setStyle(estilo)
-
-    return [t_principal, KeepTogether(t_final)]
+    return tabela
 
 
 def _pdf_dashboard(ctx) -> bytes:
@@ -182,14 +169,9 @@ def _pdf_financeiro(servicos, vt, periodo=None) -> bytes:
 
     cw = [3.5*cm, 3*cm, 3*cm, 2.5*cm, 3*cm, 2*cm]
     estilo = _ts()
-    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t = Table(linhas, colWidths=cw, repeatRows=1)
     t.setStyle(estilo)
-
-    resultado = _tabela_segura(t, linhas, estilo)
-    if isinstance(resultado, list):
-        story.extend(resultado)
-    else:
-        story.append(resultado)
+    story.append(_tabela_segura(t, linhas, estilo))
 
     _bloco_totais(story, {"Faturamento Total": _r(vt)})
     doc.build(story)
@@ -211,14 +193,9 @@ def _pdf_dentistas(dentistas, periodo=None) -> bytes:
 
     cw = [9*cm, 3*cm, 5*cm]
     estilo = _ts()
-    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t = Table(linhas, colWidths=cw, repeatRows=1)
     t.setStyle(estilo)
-
-    resultado = _tabela_segura(t, linhas, estilo)
-    if isinstance(resultado, list):
-        story.extend(resultado)
-    else:
-        story.append(resultado)
+    story.append(_tabela_segura(t, linhas, estilo))
 
     _bloco_totais(story, {"Faturamento Total": _r(fat_total)})
     doc.build(story)
@@ -249,14 +226,9 @@ def _pdf_atrasados(servicos) -> bytes:
     for i in range(1, len(linhas)):
         estilo.add("BACKGROUND", (0, i), (-1, i), colors.HexColor("#fde8e8"))
 
-    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t = Table(linhas, colWidths=cw, repeatRows=1)
     t.setStyle(estilo)
-
-    resultado = _tabela_segura(t, linhas, estilo)
-    if isinstance(resultado, list):
-        story.extend(resultado)
-    else:
-        story.append(resultado)
+    story.append(_tabela_segura(t, linhas, estilo))
 
     doc.build(story)
     return buf.getvalue()
@@ -314,14 +286,9 @@ def _pdf_periodo(servicos, di, df) -> bytes:
 
     cw = [3*cm, 3*cm, 3*cm, 2.4*cm, 2.4*cm, 2.2*cm, 2*cm]
     estilo = _ts()
-    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t = Table(linhas, colWidths=cw, repeatRows=1)
     t.setStyle(estilo)
-
-    resultado = _tabela_segura(t, linhas, estilo)
-    if isinstance(resultado, list):
-        story.extend(resultado)
-    else:
-        story.append(resultado)
+    story.append(_tabela_segura(t, linhas, estilo))
 
     _bloco_totais(story, {"Faturamento no Período": _r(fat_total)})
     doc.build(story)
@@ -347,14 +314,9 @@ def _pdf_detalhe_dentista(dentista, servicos, vt, periodo=None) -> bytes:
 
     cw = [4*cm, 4*cm, 2.8*cm, 2.8*cm, 2.8*cm, 2.6*cm]
     estilo = _ts()
-    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t = Table(linhas, colWidths=cw, repeatRows=1)
     t.setStyle(estilo)
-
-    resultado = _tabela_segura(t, linhas, estilo)
-    if isinstance(resultado, list):
-        story.extend(resultado)
-    else:
-        story.append(resultado)
+    story.append(_tabela_segura(t, linhas, estilo))
 
     _bloco_totais(story, {"Faturamento Total": _r(vt)})
     doc.build(story)
