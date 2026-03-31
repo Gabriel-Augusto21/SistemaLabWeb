@@ -8,11 +8,11 @@ from dentista.models import Dentista
 from servico.models import Servico
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import (
-    HRFlowable, Paragraph, SimpleDocTemplate,
+    HRFlowable, KeepTogether, Paragraph, SimpleDocTemplate,
     Spacer, Table, TableStyle,
 )
 
@@ -23,6 +23,7 @@ _VERMELHO  = colors.HexColor("#c0392b")
 _CINZA_CLA = colors.HexColor("#f2f3f4")
 _CINZA_MED = colors.HexColor("#bdc3c7")
 _MARROM    = colors.HexColor("#a0522d")
+
 
 def _estilos():
     base = getSampleStyleSheet()
@@ -111,16 +112,32 @@ def _doc_retrato(buf):
                              topMargin=2*cm,  bottomMargin=2*cm)
 
 
-def _doc_paisagem(buf):
-    return SimpleDocTemplate(buf, pagesize=landscape(A4),
-                             leftMargin=1.5*cm, rightMargin=1.5*cm,
-                             topMargin=2*cm,   bottomMargin=2*cm)
-
-
 def _pdf_response(conteudo: bytes, nome: str) -> HttpResponse:
     resp = HttpResponse(conteudo, content_type="application/pdf")
     resp["Content-Disposition"] = f'inline; filename="{nome}"'
     return resp
+
+
+def _tabela_segura(tabela, linhas, estilo):
+    cw = tabela._argW
+    n_dados = len(linhas) - 1 
+
+    if n_dados <= 2:
+        return KeepTogether(tabela)
+
+    linhas_corpo = linhas[1:]
+    linhas_principal = [linhas[0]] + linhas_corpo[:-2]
+    linhas_final     = [linhas[0]] + linhas_corpo[-2:]
+
+    t_principal = Table(linhas_principal, colWidths=cw, repeatRows=1,
+                        splitByRow=True, splitInRow=0)
+    t_principal.setStyle(estilo)
+
+    t_final = Table(linhas_final, colWidths=cw, repeatRows=1)
+    t_final.setStyle(estilo)
+
+    return [t_principal, KeepTogether(t_final)]
+
 
 def _pdf_dashboard(ctx) -> bytes:
     buf = BytesIO()
@@ -135,22 +152,23 @@ def _pdf_dashboard(ctx) -> bytes:
         ["Finalizados",       str(ctx["por_status"].get("FIN",  0))],
         ["Entregues",         str(ctx["por_status"].get("ENT",  0))],
         ["Cancelados",        str(ctx["por_status"].get("CAN",  0))],
-        ["Provando",         str(ctx["por_status"].get("PRO",  0))],
+        ["Provando",          str(ctx["por_status"].get("PRO",  0))],
         ["Atrasados",         str(ctx["servicos_atrasados"])],
         ["Faturamento Total", _r(ctx["valor_total"])],
     ]
     t = Table(dados, colWidths=[9*cm, 6*cm])
     t.setStyle(_ts())
-    story.append(t)
+    story.append(KeepTogether(t))
     doc.build(story)
     return buf.getvalue()
 
 
 def _pdf_financeiro(servicos, vt, periodo=None) -> bytes:
     buf = BytesIO()
-    doc = _doc_paisagem(buf)
+    doc = _doc_retrato(buf)
     story = []
     _cabecalho(story, "Relatório Financeiro", periodo=periodo)
+
     linhas = [["Prótese", "Dentista", "Paciente", "Entrada", "Vl. Serviço", "Status"]]
     for s in servicos:
         linhas.append([
@@ -161,10 +179,18 @@ def _pdf_financeiro(servicos, vt, periodo=None) -> bytes:
             _r(s.valor_servico),
             s.get_status_display(),
         ])
-    cw = [4*cm, 3.5*cm, 3.5*cm, 3*cm, 3.5*cm, 3.5*cm]
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(_ts())
-    story.append(t)
+
+    cw = [3.5*cm, 3*cm, 3*cm, 2.5*cm, 3*cm, 2*cm]
+    estilo = _ts()
+    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t.setStyle(estilo)
+
+    resultado = _tabela_segura(t, linhas, estilo)
+    if isinstance(resultado, list):
+        story.extend(resultado)
+    else:
+        story.append(resultado)
+
     _bloco_totais(story, {"Faturamento Total": _r(vt)})
     doc.build(story)
     return buf.getvalue()
@@ -175,16 +201,25 @@ def _pdf_dentistas(dentistas, periodo=None) -> bytes:
     doc = _doc_retrato(buf)
     story = []
     _cabecalho(story, "Receita por Dentista", periodo=periodo)
+
     linhas = [["Dentista", "Qtd.", "Faturamento"]]
     fat_total = 0
     for d in dentistas:
         fat = float(d.valor_total or 0)
         fat_total += fat
         linhas.append([d.nome, str(d.total_servicos), _r(fat)])
+
     cw = [9*cm, 3*cm, 5*cm]
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(_ts())
-    story.append(t)
+    estilo = _ts()
+    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t.setStyle(estilo)
+
+    resultado = _tabela_segura(t, linhas, estilo)
+    if isinstance(resultado, list):
+        story.extend(resultado)
+    else:
+        story.append(resultado)
+
     _bloco_totais(story, {"Faturamento Total": _r(fat_total)})
     doc.build(story)
     return buf.getvalue()
@@ -192,28 +227,37 @@ def _pdf_dentistas(dentistas, periodo=None) -> bytes:
 
 def _pdf_atrasados(servicos) -> bytes:
     buf = BytesIO()
-    doc = _doc_paisagem(buf)
+    doc = _doc_retrato(buf)
     story = []
     _cabecalho(story, "Serviços Atrasados",
                subtitulo=f"{len(servicos)} serviço(s) em atraso")
-    linhas = [["Prótese", "Dentista", "Paciente", "Saída Prevista", "Dias Atraso", "Status", "Valor"]]
+
+    linhas = [["Prótese", "Dentista", "Paciente", "Saída Prev.", "Atraso", "Status", "Valor"]]
     for s in servicos:
         linhas.append([
             s.tipo_protese,
             s.dentista.nome if s.dentista else "-",
             s.paciente or "-",
             _fmt_data(s.data_prevista_saida),
-            f"{s.dias_atraso} dia(s)",
+            f"{s.dias_atraso}d",
             s.get_status_display(),
             _r(s.valor_servico),
         ])
-    cw = [3.5*cm, 3.5*cm, 3*cm, 3*cm, 2.5*cm, 3*cm, 3*cm]
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    style = _ts(header_color=_VERMELHO)
+
+    cw = [3*cm, 3*cm, 3*cm, 2.5*cm, 1.8*cm, 2.2*cm, 2.5*cm]
+    estilo = _ts(header_color=_VERMELHO)
     for i in range(1, len(linhas)):
-        style.add("BACKGROUND", (0, i), (-1, i), colors.HexColor("#fde8e8"))
-    t.setStyle(style)
-    story.append(t)
+        estilo.add("BACKGROUND", (0, i), (-1, i), colors.HexColor("#fde8e8"))
+
+    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t.setStyle(estilo)
+
+    resultado = _tabela_segura(t, linhas, estilo)
+    if isinstance(resultado, list):
+        story.extend(resultado)
+    else:
+        story.append(resultado)
+
     doc.build(story)
     return buf.getvalue()
 
@@ -223,32 +267,37 @@ def _pdf_status(dados_status, periodo=None) -> bytes:
     doc = _doc_retrato(buf)
     story = []
     _cabecalho(story, "Serviços por Status", periodo=periodo)
+
     total_qtd = sum(d["quantidade"] for d in dados_status)
     total_fat = sum(d["valor_total"] for d in dados_status)
+
     linhas = [["Status", "Quantidade", "Faturamento", "% do Total"]]
     for d in dados_status:
         pct = (d["quantidade"] / total_qtd * 100) if total_qtd else 0
         linhas.append([d["status_display"], str(d["quantidade"]),
                        _r(d["valor_total"]), f"{pct:.1f}%"])
     linhas.append(["TOTAL", str(total_qtd), _r(total_fat), "100%"])
+
     cw = [6*cm, 3*cm, 4*cm, 3*cm]
+    estilo = _ts()
+    estilo.add("BACKGROUND", (0, -1), (-1, -1), _AZUL_ESC)
+    estilo.add("TEXTCOLOR",  (0, -1), (-1, -1), colors.white)
+    estilo.add("FONTNAME",   (0, -1), (-1, -1), "Helvetica-Bold")
+
     t = Table(linhas, colWidths=cw)
-    style = _ts()
-    style.add("BACKGROUND", (0, -1), (-1, -1), _AZUL_ESC)
-    style.add("TEXTCOLOR",  (0, -1), (-1, -1), colors.white)
-    style.add("FONTNAME",   (0, -1), (-1, -1), "Helvetica-Bold")
-    t.setStyle(style)
-    story.append(t)
+    t.setStyle(estilo)
+    story.append(KeepTogether(t))
     doc.build(story)
     return buf.getvalue()
 
 
 def _pdf_periodo(servicos, di, df) -> bytes:
     buf = BytesIO()
-    doc = _doc_paisagem(buf)
+    doc = _doc_retrato(buf)
     story = []
     periodo = f"{di.strftime('%d/%m/%Y')} a {df.strftime('%d/%m/%Y')}"
     _cabecalho(story, "Relatório por Período", periodo=periodo)
+
     linhas = [["Prótese", "Dentista", "Paciente", "Entrada", "Saída Prev.", "Status", "Vl. Serviço"]]
     fat_total = 0
     for s in servicos:
@@ -262,10 +311,18 @@ def _pdf_periodo(servicos, di, df) -> bytes:
             s.get_status_display(),
             _r(s.valor_servico),
         ])
-    cw = [4*cm, 3.5*cm, 3.5*cm, 2.8*cm, 2.8*cm, 3*cm, 3.4*cm]
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(_ts())
-    story.append(t)
+
+    cw = [3*cm, 3*cm, 3*cm, 2.4*cm, 2.4*cm, 2.2*cm, 2*cm]
+    estilo = _ts()
+    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t.setStyle(estilo)
+
+    resultado = _tabela_segura(t, linhas, estilo)
+    if isinstance(resultado, list):
+        story.extend(resultado)
+    else:
+        story.append(resultado)
+
     _bloco_totais(story, {"Faturamento no Período": _r(fat_total)})
     doc.build(story)
     return buf.getvalue()
@@ -273,9 +330,10 @@ def _pdf_periodo(servicos, di, df) -> bytes:
 
 def _pdf_detalhe_dentista(dentista, servicos, vt, periodo=None) -> bytes:
     buf = BytesIO()
-    doc = _doc_paisagem(buf)
+    doc = _doc_retrato(buf)
     story = []
     _cabecalho(story, f"Serviços — {dentista.nome}", periodo=periodo)
+
     linhas = [["Prótese", "Paciente", "Entrada", "Saída Prev.", "Status", "Valor"]]
     for s in servicos:
         linhas.append([
@@ -286,10 +344,18 @@ def _pdf_detalhe_dentista(dentista, servicos, vt, periodo=None) -> bytes:
             s.get_status_display(),
             _r(s.valor_servico),
         ])
-    cw = [5*cm, 5*cm, 3*cm, 3*cm, 3.5*cm, 3.5*cm]
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(_ts())
-    story.append(t)
+
+    cw = [4*cm, 4*cm, 2.8*cm, 2.8*cm, 2.8*cm, 2.6*cm]
+    estilo = _ts()
+    t = Table(linhas, colWidths=cw, repeatRows=1, splitByRow=True, splitInRow=0)
+    t.setStyle(estilo)
+
+    resultado = _tabela_segura(t, linhas, estilo)
+    if isinstance(resultado, list):
+        story.extend(resultado)
+    else:
+        story.append(resultado)
+
     _bloco_totais(story, {"Faturamento Total": _r(vt)})
     doc.build(story)
     return buf.getvalue()
@@ -313,7 +379,6 @@ def _agg_fat(qs):
 
 def _periodo_str(di, df) -> str:
     return f"{di.strftime('%d/%m/%Y')} a {df.strftime('%d/%m/%Y')}"
-
 
 def dashboard(request):
     hoje = timezone.now().date()
@@ -399,13 +464,13 @@ def detalhe_dentista(request, pk):
     vt = _agg_fat(qs)
 
     ctx = {
-        "dentista":     dentista,
-        "servicos":     qs,
-        "valor_total":  vt,
-        "data_inicio":  di,
-        "data_fim":     df,
+        "dentista":      dentista,
+        "servicos":      qs,
+        "valor_total":   vt,
+        "data_inicio":   di,
+        "data_fim":      df,
         "status_filtro": status_filtro,
-        "statuses":     Servico.STATUS_CHOICES,
+        "statuses":      Servico.STATUS_CHOICES,
     }
     if request.GET.get("pdf"):
         return _pdf_response(
