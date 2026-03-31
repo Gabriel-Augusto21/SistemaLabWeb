@@ -24,6 +24,7 @@ _CINZA_CLA = colors.HexColor("#f2f3f4")
 _CINZA_MED = colors.HexColor("#bdc3c7")
 _MARROM    = colors.HexColor("#a0522d")
 
+
 def _estilos():
     base = getSampleStyleSheet()
     return {
@@ -104,6 +105,18 @@ def _r(v) -> str:
 def _fmt_data(d) -> str:
     return d.strftime("%d/%m/%Y") if d else "-"
 
+_ESTILO_CELULA = None
+
+def _celula(texto):
+    global _ESTILO_CELULA
+    if _ESTILO_CELULA is None:
+        _ESTILO_CELULA = ParagraphStyle(
+            "celula", parent=getSampleStyleSheet()["Normal"],
+            fontSize=8, fontName="Helvetica",
+            leading=10, wordWrap="LTR",
+        )
+    return Paragraph(str(texto) if texto else "-", _ESTILO_CELULA)
+
 
 def _doc_retrato(buf):
     return SimpleDocTemplate(buf, pagesize=A4,
@@ -117,12 +130,17 @@ def _pdf_response(conteudo: bytes, nome: str) -> HttpResponse:
     return resp
 
 
-def _tabela_segura(tabela, linhas, estilo):
+def _tabela_segura(linhas, cw, estilo):
     n_dados = len(linhas) - 1  
 
-    if n_dados <= 2:
-        return KeepTogether(tabela)
-    return tabela
+    if n_dados <= 20:
+        t = Table(linhas, colWidths=cw, repeatRows=0)
+        t.setStyle(estilo)
+        return KeepTogether(t)
+
+    t = Table(linhas, colWidths=cw, repeatRows=1)
+    t.setStyle(estilo)
+    return t
 
 
 def _pdf_dashboard(ctx) -> bytes:
@@ -158,19 +176,17 @@ def _pdf_financeiro(servicos, vt, periodo=None) -> bytes:
     linhas = [["Prótese", "Dentista", "Paciente", "Entrada", "Vl. Serviço", "Status"]]
     for s in servicos:
         linhas.append([
-            s.tipo_protese,
-            s.dentista.nome if s.dentista else "-",
-            s.paciente or "-",
+            _celula(s.tipo_protese),
+            _celula(s.dentista.nome if s.dentista else "-"),
+            _celula(s.paciente or "-"),
             _fmt_data(s.data_entrada),
             _r(s.valor_servico),
-            s.get_status_display(),
+            _celula(s.get_status_display()),
         ])
 
     cw = [3.5*cm, 3*cm, 3*cm, 2.5*cm, 3*cm, 2*cm]
     estilo = _ts()
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(estilo)
-    story.append(_tabela_segura(t, linhas, estilo))
+    story.append(_tabela_segura(linhas, cw, estilo))
 
     _bloco_totais(story, {"Faturamento Total": _r(vt)})
     doc.build(story)
@@ -188,13 +204,11 @@ def _pdf_dentistas(dentistas, periodo=None) -> bytes:
     for d in dentistas:
         fat = float(d.valor_total or 0)
         fat_total += fat
-        linhas.append([d.nome, str(d.total_servicos), _r(fat)])
+        linhas.append([_celula(d.nome), str(d.total_servicos), _r(fat)])
 
     cw = [9*cm, 3*cm, 5*cm]
     estilo = _ts()
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(estilo)
-    story.append(_tabela_segura(t, linhas, estilo))
+    story.append(_tabela_segura(linhas, cw, estilo))
 
     _bloco_totais(story, {"Faturamento Total": _r(fat_total)})
     doc.build(story)
@@ -211,12 +225,12 @@ def _pdf_atrasados(servicos) -> bytes:
     linhas = [["Prótese", "Dentista", "Paciente", "Saída Prev.", "Atraso", "Status", "Valor"]]
     for s in servicos:
         linhas.append([
-            s.tipo_protese,
-            s.dentista.nome if s.dentista else "-",
-            s.paciente or "-",
+            _celula(s.tipo_protese),
+            _celula(s.dentista.nome if s.dentista else "-"),
+            _celula(s.paciente or "-"),
             _fmt_data(s.data_prevista_saida),
             f"{s.dias_atraso}d",
-            s.get_status_display(),
+            _celula(s.get_status_display()),
             _r(s.valor_servico),
         ])
 
@@ -225,9 +239,7 @@ def _pdf_atrasados(servicos) -> bytes:
     for i in range(1, len(linhas)):
         estilo.add("BACKGROUND", (0, i), (-1, i), colors.HexColor("#fde8e8"))
 
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(estilo)
-    story.append(_tabela_segura(t, linhas, estilo))
+    story.append(_tabela_segura(linhas, cw, estilo))
 
     doc.build(story)
     return buf.getvalue()
@@ -274,20 +286,18 @@ def _pdf_periodo(servicos, di, df) -> bytes:
     for s in servicos:
         fat_total += float(s.valor_servico or 0)
         linhas.append([
-            s.tipo_protese,
-            s.dentista.nome if s.dentista else "-",
-            s.paciente or "-",
+            _celula(s.tipo_protese),
+            _celula(s.dentista.nome if s.dentista else "-"),
+            _celula(s.paciente or "-"),
             _fmt_data(s.data_entrada),
             _fmt_data(s.data_prevista_saida),
-            s.get_status_display(),
+            _celula(s.get_status_display()),
             _r(s.valor_servico),
         ])
 
     cw = [3*cm, 3*cm, 3*cm, 2.4*cm, 2.4*cm, 2.2*cm, 2*cm]
     estilo = _ts()
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(estilo)
-    story.append(_tabela_segura(t, linhas, estilo))
+    story.append(_tabela_segura(linhas, cw, estilo))
 
     _bloco_totais(story, {"Faturamento no Período": _r(fat_total)})
     doc.build(story)
@@ -303,19 +313,17 @@ def _pdf_detalhe_dentista(dentista, servicos, vt, periodo=None) -> bytes:
     linhas = [["Prótese", "Paciente", "Entrada", "Saída Prev.", "Status", "Valor"]]
     for s in servicos:
         linhas.append([
-            s.tipo_protese,
-            s.paciente or "-",
+            _celula(s.tipo_protese),
+            _celula(s.paciente or "-"),
             _fmt_data(s.data_entrada),
             _fmt_data(s.data_prevista_saida),
-            s.get_status_display(),
+            _celula(s.get_status_display()),
             _r(s.valor_servico),
         ])
 
     cw = [4*cm, 4*cm, 2.8*cm, 2.8*cm, 2.8*cm, 2.6*cm]
     estilo = _ts()
-    t = Table(linhas, colWidths=cw, repeatRows=1)
-    t.setStyle(estilo)
-    story.append(_tabela_segura(t, linhas, estilo))
+    story.append(_tabela_segura(linhas, cw, estilo))
 
     _bloco_totais(story, {"Faturamento Total": _r(vt)})
     doc.build(story)
