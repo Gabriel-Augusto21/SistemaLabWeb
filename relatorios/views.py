@@ -24,7 +24,6 @@ _CINZA_CLA = colors.HexColor("#f2f3f4")
 _CINZA_MED = colors.HexColor("#bdc3c7")
 _MARROM    = colors.HexColor("#a0522d")
 
-
 def _estilos():
     base = getSampleStyleSheet()
     return {
