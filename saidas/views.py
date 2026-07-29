@@ -70,18 +70,20 @@ def saida(request):
     else:
         mes_seguinte = {'mes': mes + 1, 'ano': ano}
 
-    # Tabela filtrada
-    saidas_lista = Saida.objects.all()
+    # Tabela e total — por padrão, restritos ao mês/ano selecionado no
+    # calendário. `mes_filtro`/`ano_filtro` permitem sobrescrever esse
+    # período via filtro explícito, caso necessário.
+    mes_filtro = request.GET.get('mes_filtro', mes)
+    ano_filtro = request.GET.get('ano_filtro', ano)
     tipo_filtro = request.GET.get('tipo')
-    mes_filtro  = request.GET.get('mes_filtro')
-    ano_filtro  = request.GET.get('ano_filtro')
 
+    saidas_lista = Saida.objects.filter(
+        data__month=mes_filtro, data__year=ano_filtro
+    )
     if tipo_filtro:
         saidas_lista = saidas_lista.filter(tipo__icontains=tipo_filtro)
-    if mes_filtro:
-        saidas_lista = saidas_lista.filter(data__month=mes_filtro)
-    if ano_filtro:
-        saidas_lista = saidas_lista.filter(data__year=ano_filtro)
+
+    saidas_lista = saidas_lista.order_by('-data')
 
     total = saidas_lista.aggregate(total=Sum('valor'))['total'] or 0
 
@@ -96,8 +98,8 @@ def saida(request):
         'saidas': saidas_lista,
         'total': total,
         'tipo_filtro': tipo_filtro or '',
-        'mes_filtro': mes_filtro or '',
-        'ano_filtro': ano_filtro or '',
+        'mes_filtro': mes_filtro,
+        'ano_filtro': ano_filtro,
     })
 
 
