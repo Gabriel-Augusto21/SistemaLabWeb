@@ -10,10 +10,47 @@
   <h1 class="h3 mb-0">
     <i class="fas fa-chart-bar"></i> Dashboard
   </h1>
-  <a href="?pdf=1" class="btn btn-danger btn-sm">
+  <a href="?mes={{ mes_atual }}&ano={{ ano_atual }}&pdf=1" class="btn btn-danger btn-sm">
     <i class="fas fa-file-pdf"></i> Exportar PDF
   </a>
 </div>
+
+<form method="get" class="row g-2 align-items-center mb-4">
+  <div class="col-auto">
+    <label for="mes" class="col-form-label">Mês</label>
+  </div>
+  <div class="col-auto">
+    <select id="mes" name="mes" class="form-select form-select-sm" onchange="this.form.submit()">
+      <option value="1"  {% if mes_atual == 1  %}selected{% endif %}>Janeiro</option>
+      <option value="2"  {% if mes_atual == 2  %}selected{% endif %}>Fevereiro</option>
+      <option value="3"  {% if mes_atual == 3  %}selected{% endif %}>Março</option>
+      <option value="4"  {% if mes_atual == 4  %}selected{% endif %}>Abril</option>
+      <option value="5"  {% if mes_atual == 5  %}selected{% endif %}>Maio</option>
+      <option value="6"  {% if mes_atual == 6  %}selected{% endif %}>Junho</option>
+      <option value="7"  {% if mes_atual == 7  %}selected{% endif %}>Julho</option>
+      <option value="8"  {% if mes_atual == 8  %}selected{% endif %}>Agosto</option>
+      <option value="9"  {% if mes_atual == 9  %}selected{% endif %}>Setembro</option>
+      <option value="10" {% if mes_atual == 10 %}selected{% endif %}>Outubro</option>
+      <option value="11" {% if mes_atual == 11 %}selected{% endif %}>Novembro</option>
+      <option value="12" {% if mes_atual == 12 %}selected{% endif %}>Dezembro</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <label for="ano" class="col-form-label">Ano</label>
+  </div>
+  <div class="col-auto">
+    <select id="ano" name="ano" class="form-select form-select-sm" onchange="this.form.submit()">
+      {% for ano_opcao in anos_disponiveis %}
+        <option value="{{ ano_opcao }}" {% if ano_atual == ano_opcao %}selected{% endif %}>{{ ano_opcao }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <noscript>
+      <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+    </noscript>
+  </div>
+</form>
 
 <div class="row g-3 mb-4">
   <div class="col-6 col-md">
@@ -84,7 +121,7 @@
   <div class="col-md-4">
     <div class="card shadow-sm text-center kpi-card">
       <div class="card-body">
-        <p class="text-muted small mb-1">Faturamento Total</p>
+        <p class="text-muted small mb-1">Faturamento do Mês</p>
         <h4>R$ {{ valor_total|floatformat:2 }}</h4>
       </div>
     </div>

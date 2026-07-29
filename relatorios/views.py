@@ -143,11 +143,11 @@ def _tabela_segura(linhas, cw, estilo):
     return t
 
 
-def _pdf_dashboard(ctx) -> bytes:
+def _pdf_dashboard(ctx, periodo=None) -> bytes:
     buf = BytesIO()
     doc = _doc_retrato(buf)
     story = []
-    _cabecalho(story, "Dashboard Geral")
+    _cabecalho(story, "Dashboard Geral", periodo=periodo)
     dados = [
         ["Indicador",         "Valor"],
         ["Total de Serviços", str(ctx["total_servicos"])],
@@ -342,6 +342,32 @@ def _filtros_periodo(request):
     return di, df
 
 
+def _filtro_mes(request):
+    hoje = date.today()
+    try:
+        ano = int(request.GET.get("ano", hoje.year))
+        mes = int(request.GET.get("mes", hoje.month))
+    except ValueError:
+        ano, mes = hoje.year, hoje.month
+
+    primeiro_dia = date(ano, mes, 1)
+    if mes == 12:
+        ultimo_dia = date(ano + 1, 1, 1) - timedelta(days=1)
+    else:
+        ultimo_dia = date(ano, mes + 1, 1) - timedelta(days=1)
+    return primeiro_dia, ultimo_dia
+
+
+_NOMES_MESES = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+]
+
+
+def _mes_str(di) -> str:
+    return f"{_NOMES_MESES[di.month - 1]}/{di.year}"
+
+
 def _agg_fat(qs):
     return qs.aggregate(total=Sum("valor_servico"))["total"] or 0
 
@@ -351,17 +377,23 @@ def _periodo_str(di, df) -> str:
 
 def dashboard(request):
     hoje = timezone.now().date()
-    qs = Servico.objects.all()
+    di, df = _filtro_mes(request)
+    qs = Servico.objects.filter(data_entrada__gte=di, data_entrada__lte=df)
 
     por_status_qs = qs.values("status").annotate(qtd=Count("id"))
     por_status = {item["status"]: item["qtd"] for item in por_status_qs}
 
-    atrasados = qs.filter(
+    atrasados = Servico.objects.filter(
         ~Q(status__in=["ENT", "CAN", "PRO", "FIN"]),
         data_prevista_saida__lt=hoje,
     ).count()
 
     valor_total = _agg_fat(qs)
+
+    primeiro_registro = (Servico.objects.order_by("data_entrada")
+                          .values_list("data_entrada", flat=True).first())
+    ano_inicial = primeiro_registro.year if primeiro_registro else hoje.year
+    anos_disponiveis = list(range(ano_inicial, hoje.year + 1))
 
     ctx = {
         "total_servicos":     qs.count(),
@@ -374,9 +406,14 @@ def dashboard(request):
         "qtd_entregue":       por_status.get("ENT",  0),
         "qtd_cancelado":      por_status.get("CAN",  0),
         "qtd_provando":       por_status.get("PRO",  0),
+        "mes_atual":          di.month,
+        "ano_atual":          di.year,
+        "anos_disponiveis":   anos_disponiveis,
     }
     if request.GET.get("pdf"):
-        return _pdf_response(_pdf_dashboard(ctx), "dashboard.pdf")
+        return _pdf_response(
+            _pdf_dashboard(ctx, periodo=_mes_str(di)), "dashboard.pdf"
+        )
     return render(request, "dashboard.html", ctx)
 
 
